@@ -8,6 +8,8 @@ Claude Code / Codex を複数動かした時にタスクの進捗状況を一覧
 - **Phase 2**: `./phase2-ipc-server.md` - IPC サーバー実装の詳細計画
 - **Phase 3**: `./phase3-notification.md` - 通知機能の詳細計画
 - **Phase 4**: `./phase4-frontend.md` - Frontend UI 実装の詳細計画
+- **Phase 5**: `./phase5-cli-integration.md` - CLI ツール連携の詳細計画
+- **Phase 6**: `./phase6-quality.md` - 品質向上の詳細計画
 
 ## 確定要件
 
