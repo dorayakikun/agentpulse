@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:v2.tauri.app)",
+      "WebFetch(domain:developers.openai.com)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:dev.to)",
+      "WebFetch(domain:tauritutorials.com)",
+      "WebFetch(domain:docs.rs)",
+      "WebFetch(domain:docs.claude.com)",
+      "Bash(npm install:*)",
+      "Bash(npx @tauri-apps/cli icon:*)",
+      "Bash(python3:*)",
+      "Bash(cargo check:*)",
+      "Bash(cargo test:*)",
+      "Bash(timeout 45 npm run tauri:*)",
+      "Bash(chmod:*)",
+      "Bash(npm run build:*)"
+    ]
+  }
+}

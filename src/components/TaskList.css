@@ -1,0 +1,6 @@
+.task-list {
+  margin: 0;
+  padding: var(--spacing-sm) 0 0;
+  overflow-y: auto;
+  max-height: calc(100vh - 50px);
+}
