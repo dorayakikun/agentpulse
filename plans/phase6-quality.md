@@ -1050,7 +1050,7 @@ fn setup_panic_handler() {
 
 ### チェックリスト
 
-```
+```text
 □ 1. エラーハンドリング
   □ error.rs (AppError 型定義)
   □ socket_server.rs の改善
