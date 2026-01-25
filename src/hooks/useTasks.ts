@@ -94,21 +94,28 @@ export function useTasks(): UseTasksReturn {
 
   useEffect(() => {
     isMounted.current = true;
+    let cancelled = false;
+    let unlisten: UnlistenFn | null = null;
 
     // Initial fetch
     fetchTasks();
 
     // Setup event listener for real-time updates
-    let unlisten: UnlistenFn | null = null;
-
     const setupListener = async () => {
       try {
-        unlisten = await listen<Task[]>('tasks-updated', (event) => {
+        const unlistenFn = await listen<Task[]>('tasks-updated', (event) => {
           if (isMounted.current) {
             setTasks(event.payload);
             setError(null);
           }
         });
+
+        // listen() 完了時にアンマウント済みなら即座にクリーンアップ
+        if (cancelled) {
+          unlistenFn();
+        } else {
+          unlisten = unlistenFn;
+        }
       } catch (err) {
         console.error('Failed to setup event listener:', err);
       }
@@ -118,6 +125,7 @@ export function useTasks(): UseTasksReturn {
 
     // Cleanup on unmount
     return () => {
+      cancelled = true;
       isMounted.current = false;
       clearRetryTimeout();
       if (unlisten) {
