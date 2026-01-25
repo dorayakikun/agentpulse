@@ -24,11 +24,11 @@ if [[ -f "$CONFIG_FILE" ]]; then
     # バックアップを作成
     cp "$CONFIG_FILE" "${CONFIG_FILE}.backup.$(date +%Y%m%d%H%M%S)"
 
-    # notify 設定が既に存在するか確認
-    if grep -q "^notify\s*=" "$CONFIG_FILE"; then
+    # notify 設定が既に存在するか確認（POSIX互換の正規表現を使用）
+    if grep -q "^notify[[:space:]]*=" "$CONFIG_FILE"; then
         echo "Updating existing notify configuration..."
-        # 既存の notify 行を置換
-        sed -i.bak "s|^notify\s*=.*|$NOTIFY_LINE|" "$CONFIG_FILE"
+        # 既存の notify 行を置換（POSIX互換の正規表現を使用）
+        sed -i.bak "s|^notify[[:space:]]*=.*|$NOTIFY_LINE|" "$CONFIG_FILE"
         rm -f "${CONFIG_FILE}.bak"
     else
         echo "Adding notify configuration..."

@@ -5,6 +5,7 @@ use std::time::{Duration, Instant};
 use tauri::AppHandle;
 use tauri_plugin_notification::NotificationExt;
 use thiserror::Error;
+use tracing::info;
 
 use crate::models::{AgentSource, TaskStatus};
 
@@ -146,11 +147,11 @@ impl NotificationManager {
             .show()
             .map_err(|e| NotificationError::SendFailed(e.to_string()))?;
 
-        log::info!(
-            "Notification sent: {} - {} ({})",
-            request.source,
-            request.notification_type.display_name(),
-            request.session_id
+        info!(
+            source = %request.source,
+            notification_type = request.notification_type.display_name(),
+            session_id = %request.session_id,
+            "Notification sent"
         );
 
         Ok(())
@@ -165,7 +166,11 @@ impl NotificationManager {
             AgentSource::ClaudeCode => "Claude Code",
             AgentSource::Codex => "Codex",
         };
-        format!("{} - {}", source_prefix, request.notification_type.display_name())
+        format!(
+            "{} - {}",
+            source_prefix,
+            request.notification_type.display_name()
+        )
     }
 
     fn build_body(&self, request: &NotificationRequest) -> String {

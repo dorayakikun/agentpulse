@@ -52,13 +52,6 @@ jobs:
           name: AI-Agent-Status-macOS
           path: ./src-tauri/target/release/bundle/dmg/*.dmg
 
-      - name: Create Release
-        uses: softprops/action-gh-release@v2
-        with:
-          files: ./src-tauri/target/release/bundle/dmg/*.dmg
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   build-linux:
     runs-on: ubuntu-latest
     steps:
@@ -92,11 +85,28 @@ jobs:
             ./src-tauri/target/release/bundle/appimage/*.AppImage
             ./src-tauri/target/release/bundle/deb/*.deb
 
+  create-release:
+    needs: [build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download macOS artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AI-Agent-Status-macOS
+          path: ./artifacts/macos
+
+      - name: Download Linux artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: AI-Agent-Status-Linux
+          path: ./artifacts/linux
+
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            ./src-tauri/target/release/bundle/appimage/*.AppImage
-            ./src-tauri/target/release/bundle/deb/*.deb
+            ./artifacts/macos/*.dmg
+            ./artifacts/linux/*.AppImage
+            ./artifacts/linux/*.deb
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

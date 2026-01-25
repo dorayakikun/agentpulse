@@ -44,14 +44,30 @@ EVENT_TYPE=$(get_field '.type')
 THREAD_ID=$(get_field '.thread_id')
 CWD=$(get_field '.cwd')
 
+# ハッシュ生成関数（macOS/Linux両対応）
+generate_hash() {
+    local input="$1"
+    if command -v md5sum &>/dev/null; then
+        echo "$input" | md5sum | cut -d' ' -f1 | head -c 16
+    elif command -v md5 &>/dev/null; then
+        # macOS の md5 コマンド
+        echo "$input" | md5 | head -c 16
+    elif command -v shasum &>/dev/null; then
+        echo "$input" | shasum -a 256 | cut -d' ' -f1 | head -c 16
+    else
+        # フォールバック: ランダムな文字列を生成
+        echo "$$-$RANDOM-$(date +%s)" | head -c 16
+    fi
+}
+
 # thread_id がない場合はセッション ID を生成
 if [[ -z "$THREAD_ID" ]]; then
     if [[ -n "$CWD" ]]; then
         # cwd がある場合は cwd からハッシュ生成
-        THREAD_ID=$(echo "$CWD" | md5sum | cut -d' ' -f1 | head -c 16)
+        THREAD_ID=$(generate_hash "$CWD")
     else
         # cwd も空の場合はユニークな ID を生成（タイムスタンプ + PID + ランダム）
-        THREAD_ID=$(echo "${EPOCHSECONDS:-$(date +%s)}-$$-$RANDOM" | md5sum | cut -d' ' -f1 | head -c 16)
+        THREAD_ID=$(generate_hash "${EPOCHSECONDS:-$(date +%s)}-$$-$RANDOM")
     fi
 fi
 

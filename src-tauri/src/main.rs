@@ -66,8 +66,7 @@ fn main() {
 
             tauri::async_runtime::spawn(async move {
                 let config = SocketServerConfig::default();
-                let server =
-                    SocketServer::new(app_handle, state_clone, notification_clone, config);
+                let server = SocketServer::new(app_handle, state_clone, notification_clone, config);
                 if let Err(e) = server.run().await {
                     error!(error = %e, "Socket server failed");
                 }

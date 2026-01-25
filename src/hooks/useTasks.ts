@@ -21,20 +21,46 @@ export function useTasks(): UseTasksReturn {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const retryCount = useRef(0);
+  const retryTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isMounted = useRef(true);
+  const requestToken = useRef(0);
+
+  // リトライタイマーをクリア
+  const clearRetryTimeout = useCallback(() => {
+    if (retryTimeoutId.current !== null) {
+      clearTimeout(retryTimeoutId.current);
+      retryTimeoutId.current = null;
+    }
+  }, []);
 
   const fetchTasks = useCallback(async (isRetry = false) => {
+    // 新しいリクエスト開始時にトークンを更新
+    const currentToken = isRetry ? requestToken.current : ++requestToken.current;
+
     try {
       if (!isRetry) {
         setIsLoading(true);
         setError(null);
-        retryCount.current = 0; // 新しい手動リフレッシュ時にリセット
+        retryCount.current = 0;
+        clearRetryTimeout(); // 新しいリクエスト時に既存のリトライをキャンセル
       }
 
       const result = await invoke<Task[]>('get_tasks');
+
+      // アンマウント済み or 古いリクエストの場合は無視
+      if (!isMounted.current || currentToken !== requestToken.current) {
+        return;
+      }
+
       setTasks(result);
-      retryCount.current = 0; // 成功時にリセット
-      setIsLoading(false); // 成功時のみローディング解除
+      retryCount.current = 0;
+      setIsLoading(false);
     } catch (err) {
+      // アンマウント済み or 古いリクエストの場合は無視
+      if (!isMounted.current || currentToken !== requestToken.current) {
+        return;
+      }
+
       const message = getUserMessage(err);
 
       if (retryCount.current < MAX_RETRIES) {
@@ -42,17 +68,18 @@ export function useTasks(): UseTasksReturn {
         console.warn(
           `Fetch failed, retrying (${retryCount.current}/${MAX_RETRIES})...`
         );
-        setTimeout(() => fetchTasks(true), RETRY_DELAY * retryCount.current);
-        // リトライ中はローディング状態を維持
+        retryTimeoutId.current = setTimeout(
+          () => fetchTasks(true),
+          RETRY_DELAY * retryCount.current
+        );
         return;
       }
 
-      // リトライ上限に達した場合のみエラーを設定してローディング解除
       setError(message);
       setIsLoading(false);
       console.error('Failed to fetch tasks:', err);
     }
-  }, []);
+  }, [clearRetryTimeout]);
 
   const dismissTask = useCallback(async (sessionId: string) => {
     try {
@@ -66,6 +93,8 @@ export function useTasks(): UseTasksReturn {
   const clearError = useCallback(() => setError(null), []);
 
   useEffect(() => {
+    isMounted.current = true;
+
     // Initial fetch
     fetchTasks();
 
@@ -75,8 +104,10 @@ export function useTasks(): UseTasksReturn {
     const setupListener = async () => {
       try {
         unlisten = await listen<Task[]>('tasks-updated', (event) => {
-          setTasks(event.payload);
-          setError(null); // エラークリア
+          if (isMounted.current) {
+            setTasks(event.payload);
+            setError(null);
+          }
         });
       } catch (err) {
         console.error('Failed to setup event listener:', err);
@@ -87,11 +118,13 @@ export function useTasks(): UseTasksReturn {
 
     // Cleanup on unmount
     return () => {
+      isMounted.current = false;
+      clearRetryTimeout();
       if (unlisten) {
         unlisten();
       }
     };
-  }, [fetchTasks]);
+  }, [fetchTasks, clearRetryTimeout]);
 
   return {
     tasks,
