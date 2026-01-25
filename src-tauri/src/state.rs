@@ -115,6 +115,7 @@ impl AppState {
     }
 
     /// Cleanup completed tasks (older than 5 minutes)
+    #[allow(dead_code)]
     pub fn cleanup_completed_tasks(&self) {
         let now = Utc::now();
         let timeout = chrono::Duration::minutes(5);

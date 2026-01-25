@@ -138,6 +138,7 @@ pub struct TaskEndParams {
     pub session_id: String,
     pub status: TaskStatusParam,
     #[serde(default)]
+    #[allow(dead_code)]
     pub description: Option<String>,
 }
 
@@ -193,6 +194,7 @@ pub struct TaskEventPayload {
 }
 
 /// Notification payload
+#[allow(dead_code)]
 #[derive(Debug, Clone, Serialize)]
 pub struct NotificationPayload {
     pub session_id: String,

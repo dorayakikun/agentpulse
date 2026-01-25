@@ -118,6 +118,7 @@ pub enum AgentEvent {
     },
     ToolEnd {
         session_id: String,
+        #[allow(dead_code)]
         tool_name: String,
         success: bool,
     },

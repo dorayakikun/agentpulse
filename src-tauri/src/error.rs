@@ -1,6 +1,7 @@
 use thiserror::Error;
 
 /// アプリケーションエラー型
+#[allow(dead_code)]
 #[derive(Debug, Error)]
 pub enum AppError {
     #[error("Socket error: {0}")]
@@ -23,6 +24,7 @@ pub enum AppError {
 }
 
 /// Tauri コマンド用の Result 型
+#[allow(dead_code)]
 pub type AppResult<T> = Result<T, AppError>;
 
 /// Tauri コマンドからの JSON レスポンス用
@@ -53,6 +55,7 @@ impl AppError {
     }
 
     /// リカバリ可能かどうか
+    #[allow(dead_code)]
     pub fn is_recoverable(&self) -> bool {
         match self {
             AppError::Socket(_) => true,
