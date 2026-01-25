@@ -6,6 +6,7 @@ use tauri::{AppHandle, Emitter};
 use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
+use tracing::{error, info, warn};
 
 use crate::models::{Task, TaskStatus};
 use crate::notification::{NotificationManager, NotificationRequest, NotificationType};
@@ -56,7 +57,9 @@ impl From<SocketServerError> for JsonRpcError {
             SocketServerError::MethodNotFound(method) => JsonRpcError::method_not_found(&method),
             SocketServerError::InvalidParams(msg) => JsonRpcError::invalid_params(&msg),
             SocketServerError::SessionNotFound(id) => JsonRpcError::session_not_found(&id),
-            SocketServerError::SessionAlreadyExists(id) => JsonRpcError::session_already_exists(&id),
+            SocketServerError::SessionAlreadyExists(id) => {
+                JsonRpcError::session_already_exists(&id)
+            }
             _ => JsonRpcError::internal_error(&err.to_string()),
         }
     }
@@ -116,10 +119,7 @@ impl SocketServer {
             )?;
         }
 
-        log::info!(
-            "Socket server listening on {:?}",
-            self.config.socket_path
-        );
+        info!(path = ?self.config.socket_path, "Socket server listening");
 
         // Accept connections loop
         loop {
@@ -133,12 +133,12 @@ impl SocketServer {
 
                     tokio::spawn(async move {
                         if let Err(e) = handler.handle(stream).await {
-                            log::error!("Connection handler error: {:?}", e);
+                            error!(error = ?e, "Connection handler error");
                         }
                     });
                 }
                 Err(e) => {
-                    log::error!("Accept error: {:?}", e);
+                    error!(error = ?e, "Accept error");
                     tokio::time::sleep(tokio::time::Duration::from_millis(100)).await;
                 }
             }
@@ -360,7 +360,8 @@ impl ConnectionHandler {
         self.send_notification(&task, notification_type, None);
 
         // Cleanup rate limiter
-        self.notification_manager.cleanup_session(&params.session_id);
+        self.notification_manager
+            .cleanup_session(&params.session_id);
 
         Ok(serde_json::json!({
             "status": "ok",
@@ -410,7 +411,7 @@ impl ConnectionHandler {
             .notification_manager
             .send_notification(&self.app_handle, request)
         {
-            log::warn!("Failed to send notification: {:?}", e);
+            warn!(error = ?e, "Failed to send notification");
         }
     }
 }

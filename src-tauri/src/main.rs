@@ -1,6 +1,8 @@
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 mod commands;
+mod error;
+mod logging;
 mod models;
 mod notification;
 mod protocol;
@@ -10,16 +12,35 @@ mod tray;
 
 use std::sync::Arc;
 
+use logging::{get_log_dir, init_logging, LogConfig};
 use notification::NotificationManager;
 use socket_server::{SocketServer, SocketServerConfig};
 use state::AppState;
 use tauri::RunEvent;
+use tracing::{error, info, Level};
 
 #[cfg(target_os = "macos")]
 use tauri::ActivationPolicy;
 
 fn main() {
-    env_logger::init();
+    // ロギング初期化
+    let log_config = LogConfig {
+        level: if cfg!(debug_assertions) {
+            Level::DEBUG
+        } else {
+            Level::INFO
+        },
+        log_dir: get_log_dir(),
+        json_format: !cfg!(debug_assertions),
+    };
+
+    // ガードを保持（ドロップするとログが失われる）
+    let _guard = init_logging(log_config);
+
+    info!(
+        version = env!("CARGO_PKG_VERSION"),
+        "Starting AI Agent Status Monitor"
+    );
 
     let app_state = Arc::new(AppState::new());
     let notification_manager = Arc::new(NotificationManager::new());
@@ -45,14 +66,13 @@ fn main() {
 
             tauri::async_runtime::spawn(async move {
                 let config = SocketServerConfig::default();
-                let server =
-                    SocketServer::new(app_handle, state_clone, notification_clone, config);
+                let server = SocketServer::new(app_handle, state_clone, notification_clone, config);
                 if let Err(e) = server.run().await {
-                    log::error!("Socket server error: {:?}", e);
+                    error!(error = %e, "Socket server failed");
                 }
             });
 
-            log::info!("AI Agent Status Monitor started");
+            info!("Application setup completed");
 
             Ok(())
         })
@@ -66,7 +86,7 @@ fn main() {
             if let RunEvent::Exit = event {
                 // Cleanup socket file on exit
                 let _ = std::fs::remove_file("/tmp/ai-agent-status.sock");
-                log::info!("Socket file cleaned up");
+                info!("Socket file cleaned up");
             }
         });
 }

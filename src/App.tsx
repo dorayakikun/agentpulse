@@ -1,25 +1,26 @@
-import { useTasks } from "./hooks/useTasks";
-import { Header } from "./components/Header";
-import { TaskList } from "./components/TaskList";
-import { EmptyState } from "./components/EmptyState";
-import "./styles/variables.css";
-import "./App.css";
+import { useTasks } from './hooks/useTasks';
+import { Header } from './components/Header';
+import { TaskList } from './components/TaskList';
+import { EmptyState } from './components/EmptyState';
+import { ErrorBanner } from './components/ErrorBanner';
+import './styles/variables.css';
+import './App.css';
 
 function App() {
-  const { tasks, isLoading, error, dismissTask } = useTasks();
+  const { tasks, isLoading, error, refresh, dismissTask, clearError } =
+    useTasks();
 
   return (
     <div className="app">
       <Header taskCount={tasks.length} />
+      {error && (
+        <ErrorBanner message={error} onRetry={refresh} onDismiss={clearError} />
+      )}
       <main className="main">
         {isLoading ? (
           <div className="loading">
             <div className="loading-spinner" />
             <span>Loading...</span>
-          </div>
-        ) : error ? (
-          <div className="error">
-            <p>{error}</p>
           </div>
         ) : tasks.length === 0 ? (
           <EmptyState />
