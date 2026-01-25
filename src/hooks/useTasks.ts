@@ -33,6 +33,7 @@ export function useTasks(): UseTasksReturn {
       const result = await invoke<Task[]>('get_tasks');
       setTasks(result);
       retryCount.current = 0; // 成功時にリセット
+      setIsLoading(false); // 成功時のみローディング解除
     } catch (err) {
       const message = getUserMessage(err);
 
@@ -42,15 +43,14 @@ export function useTasks(): UseTasksReturn {
           `Fetch failed, retrying (${retryCount.current}/${MAX_RETRIES})...`
         );
         setTimeout(() => fetchTasks(true), RETRY_DELAY * retryCount.current);
+        // リトライ中はローディング状態を維持
         return;
       }
 
+      // リトライ上限に達した場合のみエラーを設定してローディング解除
       setError(message);
+      setIsLoading(false);
       console.error('Failed to fetch tasks:', err);
-    } finally {
-      if (!isRetry || retryCount.current >= MAX_RETRIES) {
-        setIsLoading(false);
-      }
     }
   }, []);
 
