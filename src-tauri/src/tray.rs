@@ -24,6 +24,9 @@ pub fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
         .on_tray_icon_event(|tray, event| {
             let app = tray.app_handle();
 
+            // Update tray position for the positioner plugin
+            tauri_plugin_positioner::on_tray_event(app, &event);
+
             if let TrayIconEvent::Click { button, .. } = event {
                 if button == MouseButton::Left {
                     toggle_window(app);
