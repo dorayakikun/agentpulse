@@ -64,10 +64,36 @@ EOF
 # 既存の settings.json がある場合はマージ
 if [[ -f "$SETTINGS_FILE" ]]; then
     echo "Existing settings found at $SETTINGS_FILE"
-    echo "Merging hooks configuration..."
 
-    # 既存の設定と新しい hooks をマージ
-    MERGED=$(jq -s '.[0] * .[1]' "$SETTINGS_FILE" <(echo "$HOOKS_CONFIG"))
+    # 既存の hooks があるかチェック
+    EXISTING_HOOKS=$(jq -r '.hooks // empty' "$SETTINGS_FILE")
+
+    if [[ -n "$EXISTING_HOOKS" ]]; then
+        echo "WARNING: Existing hooks configuration found!"
+        echo "Existing hooks will be preserved and new hooks will be merged."
+        echo ""
+
+        # ディープマージ: 既存の hooks 配列に新しい hooks を追加
+        MERGED=$(jq -s '
+            def deep_merge:
+                reduce .[] as $item ({}; . as $base |
+                    $item | to_entries | reduce .[] as $entry ($base;
+                        if ($entry.value | type) == "array" and ($base[$entry.key] | type) == "array" then
+                            .[$entry.key] = ($base[$entry.key] + $entry.value | unique)
+                        elif ($entry.value | type) == "object" and ($base[$entry.key] | type) == "object" then
+                            .[$entry.key] = ([$base[$entry.key], $entry.value] | deep_merge)
+                        else
+                            .[$entry.key] = $entry.value
+                        end
+                    )
+                );
+            [.[0], .[1]] | deep_merge
+        ' "$SETTINGS_FILE" <(echo "$HOOKS_CONFIG"))
+    else
+        echo "Merging hooks configuration..."
+        # hooks がない場合は単純マージ
+        MERGED=$(jq -s '.[0] * .[1]' "$SETTINGS_FILE" <(echo "$HOOKS_CONFIG"))
+    fi
 
     # バックアップを作成
     cp "$SETTINGS_FILE" "${SETTINGS_FILE}.backup.$(date +%Y%m%d%H%M%S)"

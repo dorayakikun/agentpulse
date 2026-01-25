@@ -44,9 +44,15 @@ EVENT_TYPE=$(get_field '.type')
 THREAD_ID=$(get_field '.thread_id')
 CWD=$(get_field '.cwd')
 
-# thread_id がない場合は cwd からセッション ID を生成
+# thread_id がない場合はセッション ID を生成
 if [[ -z "$THREAD_ID" ]]; then
-    THREAD_ID=$(echo "$CWD" | md5sum | cut -d' ' -f1 | head -c 16)
+    if [[ -n "$CWD" ]]; then
+        # cwd がある場合は cwd からハッシュ生成
+        THREAD_ID=$(echo "$CWD" | md5sum | cut -d' ' -f1 | head -c 16)
+    else
+        # cwd も空の場合はユニークな ID を生成（タイムスタンプ + PID + ランダム）
+        THREAD_ID=$(echo "${EPOCHSECONDS:-$(date +%s)}-$$-$RANDOM" | md5sum | cut -d' ' -f1 | head -c 16)
+    fi
 fi
 
 case "$EVENT_TYPE" in

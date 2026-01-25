@@ -39,7 +39,20 @@ pub fn init_logging(config: LogConfig) -> Option<WorkerGuard> {
     if let Some(log_dir) = config.log_dir {
         // ログディレクトリを作成
         if let Err(e) = std::fs::create_dir_all(&log_dir) {
-            eprintln!("Failed to create log directory: {}", e);
+            eprintln!(
+                "Failed to create log directory {:?}: {}. Falling back to stderr-only logging.",
+                log_dir, e
+            );
+            // stderr のみにフォールバック
+            tracing_subscriber::registry()
+                .with(env_filter)
+                .with(
+                    fmt::layer()
+                        .compact()
+                        .with_target(true)
+                        .with_writer(std::io::stderr),
+                )
+                .init();
             return None;
         }
 

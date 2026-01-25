@@ -27,11 +27,12 @@ export function useTasks(): UseTasksReturn {
       if (!isRetry) {
         setIsLoading(true);
         setError(null);
+        retryCount.current = 0; // 新しい手動リフレッシュ時にリセット
       }
 
       const result = await invoke<Task[]>('get_tasks');
       setTasks(result);
-      retryCount.current = 0; // リセット
+      retryCount.current = 0; // 成功時にリセット
     } catch (err) {
       const message = getUserMessage(err);
 

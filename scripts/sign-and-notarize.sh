@@ -45,20 +45,25 @@ if [[ -f "$DMG_PATH" ]]; then
 fi
 
 # 公証
-echo "Submitting for notarization..."
-xcrun notarytool submit "$DMG_PATH" \
-    --apple-id "$APPLE_ID" \
-    --password "$APPLE_ID_PASSWORD" \
-    --team-id "$APPLE_TEAM_ID" \
-    --wait
+if [[ -f "$DMG_PATH" ]]; then
+    echo "Submitting for notarization..."
+    xcrun notarytool submit "$DMG_PATH" \
+        --apple-id "$APPLE_ID" \
+        --password "$APPLE_ID_PASSWORD" \
+        --team-id "$APPLE_TEAM_ID" \
+        --wait
 
-# Staple（公証チケットを添付）
-echo "Stapling notarization ticket..."
-xcrun stapler staple "$DMG_PATH"
+    # Staple（公証チケットを添付）
+    echo "Stapling notarization ticket..."
+    xcrun stapler staple "$DMG_PATH"
 
-# 最終検証
-echo "Final verification..."
-spctl --assess --type open --context context:primary-signature --verbose "$DMG_PATH"
+    # 最終検証
+    echo "Final verification..."
+    spctl --assess --type open --context context:primary-signature --verbose "$DMG_PATH"
+else
+    echo "WARNING: DMG file not found at $DMG_PATH"
+    echo "Skipping notarization step."
+fi
 
 echo ""
 echo "Signing and notarization completed successfully!"
