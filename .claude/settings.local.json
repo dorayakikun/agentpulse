@@ -16,7 +16,11 @@
       "Bash(cargo test:*)",
       "Bash(timeout 45 npm run tauri:*)",
       "Bash(chmod:*)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(npm run type-check:*)",
+      "Bash(npx tsc:*)",
+      "Bash(xargs cat:*)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }

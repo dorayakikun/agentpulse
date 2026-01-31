@@ -7,6 +7,16 @@ import { getUserMessage } from '../types/error';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
+const waitForTauri = async (maxRetries = 10, delay = 100): Promise<boolean> => {
+  for (let i = 0; i < maxRetries; i++) {
+    if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  return false;
+};
+
 interface UseTasksReturn {
   tasks: Task[];
   isLoading: boolean;
@@ -97,31 +107,41 @@ export function useTasks(): UseTasksReturn {
     let cancelled = false;
     let unlisten: UnlistenFn | null = null;
 
-    // Initial fetch
-    fetchTasks();
-
-    // Setup event listener for real-time updates
-    const setupListener = async () => {
-      try {
-        const unlistenFn = await listen<Task[]>('tasks-updated', (event) => {
-          if (isMounted.current) {
-            setTasks(event.payload);
-            setError(null);
-          }
-        });
-
-        // listen() 完了時にアンマウント済みなら即座にクリーンアップ
-        if (cancelled) {
-          unlistenFn();
-        } else {
-          unlisten = unlistenFn;
-        }
-      } catch (err) {
-        console.error('Failed to setup event listener:', err);
+    const init = async () => {
+      // Tauri ブリッジの準備を待つ
+      const isReady = await waitForTauri();
+      if (!isReady || cancelled || !isMounted.current) {
+        return;
       }
+
+      // Initial fetch
+      fetchTasks();
+
+      // Setup event listener for real-time updates
+      const setupListener = async () => {
+        try {
+          const unlistenFn = await listen<Task[]>('tasks-updated', (event) => {
+            if (isMounted.current) {
+              setTasks(event.payload);
+              setError(null);
+            }
+          });
+
+          // listen() 完了時にアンマウント済みなら即座にクリーンアップ
+          if (cancelled) {
+            unlistenFn();
+          } else {
+            unlisten = unlistenFn;
+          }
+        } catch (err) {
+          console.error('Failed to setup event listener:', err);
+        }
+      };
+
+      setupListener();
     };
 
-    setupListener();
+    init();
 
     // Cleanup on unmount
     return () => {

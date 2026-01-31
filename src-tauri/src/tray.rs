@@ -1,6 +1,6 @@
 use tauri::{
     menu::{Menu, MenuItem},
-    tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
+    tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     webview::WebviewWindowBuilder,
     AppHandle, Manager, WebviewUrl,
 };
@@ -27,10 +27,13 @@ pub fn setup_tray(app: &tauri::App) -> tauri::Result<()> {
             // Update tray position for the positioner plugin
             tauri_plugin_positioner::on_tray_event(app, &event);
 
-            if let TrayIconEvent::Click { button, .. } = event {
-                if button == MouseButton::Left {
-                    toggle_window(app);
-                }
+            if let TrayIconEvent::Click {
+                button: MouseButton::Left,
+                button_state: MouseButtonState::Up,
+                ..
+            } = event
+            {
+                toggle_window(app);
             }
         })
         .build(app)?;

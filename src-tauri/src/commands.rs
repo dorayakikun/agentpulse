@@ -1,10 +1,11 @@
 use crate::protocol::TaskEventPayload;
 use crate::state::AppState;
+use std::sync::Arc;
 use tauri::State;
 
 /// Get all tasks (returns frontend-friendly format with Unix timestamps)
 #[tauri::command]
-pub fn get_tasks(state: State<AppState>) -> Vec<TaskEventPayload> {
+pub fn get_tasks(state: State<Arc<AppState>>) -> Vec<TaskEventPayload> {
     state
         .get_all_tasks()
         .iter()
@@ -23,6 +24,6 @@ pub fn get_tasks(state: State<AppState>) -> Vec<TaskEventPayload> {
 
 /// Remove a task
 #[tauri::command]
-pub fn remove_task(session_id: String, state: State<AppState>) -> bool {
+pub fn remove_task(session_id: String, state: State<Arc<AppState>>) -> bool {
     state.remove_task(&session_id).is_some()
 }
