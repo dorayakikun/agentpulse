@@ -419,7 +419,14 @@ impl ConnectionHandler {
             .notification_manager
             .send_notification(&self.app_handle, request)
         {
-            warn!(error = ?e, "Failed to send notification");
+            match e {
+                crate::notification::NotificationError::RateLimited => {
+                    debug!(error = ?e, "Notification suppressed by local rate limiter");
+                }
+                _ => {
+                    warn!(error = ?e, "Failed to send notification");
+                }
+            }
         }
     }
 }

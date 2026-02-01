@@ -6,8 +6,27 @@
 
 set -euo pipefail
 
+# Claude Code hooks run in a non-interactive shell; ensure common brew paths exist.
+PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
+
 SOCKET="/tmp/agentpulse.sock"
 EVENT_TYPE="${1:-}"
+
+# Resolve jq path (homebrew paths may not be on PATH in hook environment).
+JQ_BIN="$(command -v jq || true)"
+if [[ -z "$JQ_BIN" ]]; then
+    for candidate in /opt/homebrew/bin/jq /usr/local/bin/jq /usr/bin/jq; do
+        if [[ -x "$candidate" ]]; then
+            JQ_BIN="$candidate"
+            break
+        fi
+    done
+fi
+
+# If jq is unavailable, skip silently (avoid blocking Claude Code).
+if [[ -z "$JQ_BIN" ]]; then
+    exit 0
+fi
 
 # ソケットが存在しない場合は終了（アプリ未起動）
 if [[ ! -S "$SOCKET" ]]; then
@@ -26,7 +45,7 @@ send_message() {
     local method="$1"
     local params="$2"
     local message
-    message=$(jq -nc \
+    message=$("$JQ_BIN" -nc \
         --arg method "$method" \
         --argjson params "$params" \
         '{jsonrpc: "2.0", method: $method, params: $params, id: null}')
@@ -36,7 +55,7 @@ send_message() {
 
 # フィールド抽出ヘルパー
 get_field() {
-    echo "$INPUT" | jq -r "$1 // empty"
+    echo "$INPUT" | "$JQ_BIN" -r "$1 // empty"
 }
 
 # イベント種別に応じた処理
@@ -68,7 +87,7 @@ case "$EVENT_TYPE" in
         # tool_input から description を抽出（可能であれば）
         DESCRIPTION=""
         if [[ -n "$TOOL_INPUT" ]]; then
-            DESCRIPTION=$(echo "$TOOL_INPUT" | jq -r '.description // .file_path // .command // empty' 2>/dev/null || echo "")
+            DESCRIPTION=$(echo "$TOOL_INPUT" | "$JQ_BIN" -r '.description // .file_path // .command // empty' 2>/dev/null || echo "")
         fi
 
         if [[ -n "$SESSION_ID" && -n "$TOOL_NAME" ]]; then
@@ -119,7 +138,7 @@ case "$EVENT_TYPE" in
     notification)
         # 通知イベント（permission_prompt, idle_prompt）
         SESSION_ID=$(get_field '.session_id')
-        NOTIFICATION_TYPE=$(get_field '.type')
+        NOTIFICATION_TYPE=$(get_field '.notification_type // .type')
         MESSAGE=$(get_field '.message')
 
         if [[ -n "$SESSION_ID" ]]; then
