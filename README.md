@@ -205,6 +205,22 @@ echo '{"session_id":"debug-test","cwd":"/tmp"}' | ./scripts/claude-code-hook.sh 
 tail -f ~/Library/Logs/AI\ Agent\ Status/ai-agent-status*.log
 ```
 
+### タスク状態のトレイアニメーション
+
+トレイ（メニューバー）アイコンは **8 枚の PNG** でアニメーションします。  
+`running` と `waiting` の 2 セットを用意してあり、**後から画像を差し替えて自由に変更できます**。
+
+macOS の配置先:
+- `~/Library/Application Support/com.ai-agent-status.app/tray/running/frame_0.png` ... `frame_7.png`
+- `~/Library/Application Support/com.ai-agent-status.app/tray/waiting/frame_0.png` ... `frame_7.png`
+
+動作:
+- `waiting` が 1 件以上: `waiting` セットを表示
+- `running` が 1 件以上: `running` セットを表示
+- それ以外: `running/frame_0.png` を表示
+
+差し替え後は **数秒以内に自動リロード**されます。
+
 ## 技術スタック
 
 - **Frontend**: React 18 + TypeScript + Vite

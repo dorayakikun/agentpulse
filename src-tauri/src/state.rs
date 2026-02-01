@@ -46,6 +46,11 @@ impl AppState {
             } => {
                 let mut task = Task::new(session_id.clone(), source, cwd);
                 task.description = description;
+                if let Some(desc) = &task.description {
+                    if !desc.trim().is_empty() {
+                        task.last_activity = Some(desc.clone());
+                    }
+                }
                 self.tasks.insert(session_id, task.clone());
                 Some(task)
             }
@@ -85,6 +90,11 @@ impl AppState {
                 if let Some(mut task) = self.tasks.get_mut(&session_id) {
                     task.update_status(TaskStatus::WaitingForInput);
                     task.description = Some(message);
+                    if let Some(desc) = &task.description {
+                        if !desc.trim().is_empty() {
+                            task.last_activity = Some(desc.clone());
+                        }
+                    }
                     task.last_updated = Utc::now();
                     return Some(task.clone());
                 }
@@ -106,6 +116,11 @@ impl AppState {
             } => {
                 if let Some(mut task) = self.tasks.get_mut(&session_id) {
                     task.description = description;
+                    if let Some(desc) = &task.description {
+                        if !desc.trim().is_empty() {
+                            task.last_activity = Some(desc.clone());
+                        }
+                    }
                     task.last_updated = Utc::now();
                     return Some(task.clone());
                 }

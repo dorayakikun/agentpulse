@@ -67,6 +67,12 @@ EVENT_TYPE=$(get_field '.type // .event')
 THREAD_ID=$(get_field '."thread-id" // .thread_id // .session_id')
 CWD=$(get_field '.cwd // ."project-path" // .project_path')
 
+# ユーザー入力待ちフラグがあればイベント種別に反映
+NEEDS_USER_INPUT=$(get_field '.waiting_for_input // .awaiting_user_input // .requires_user_input // .needs_user_input // .user_input_required')
+if [[ "$NEEDS_USER_INPUT" == "true" ]]; then
+    EVENT_TYPE="waiting-for-input"
+fi
+
 log_debug "[codex-notify] EVENT_TYPE: $EVENT_TYPE"
 log_debug "[codex-notify] THREAD_ID(raw): $THREAD_ID"
 log_debug "[codex-notify] CWD: $CWD"
@@ -98,6 +104,22 @@ if [[ -z "$THREAD_ID" ]]; then
     fi
 fi
 
+# セッション開始メッセージを送信（存在済みでも問題なし）
+ensure_session_start() {
+    if [[ -n "$THREAD_ID" && -n "$CWD" ]]; then
+        local params
+        params=$(jq -nc \
+            --arg session_id "$THREAD_ID" \
+            --arg project_path "$CWD" \
+            '{
+                session_id: $session_id,
+                source: "codex",
+                project_path: $project_path
+            }')
+        send_message "task.start" "$params"
+    fi
+}
+
 case "$EVENT_TYPE" in
     agent-turn-start)
         # エージェントターン開始
@@ -115,6 +137,8 @@ case "$EVENT_TYPE" in
     exec-command-start|apply-patch-start)
         # コマンド実行開始 / パッチ適用開始
         COMMAND=$(get_field '.command')
+
+        ensure_session_start
 
         PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
@@ -134,6 +158,8 @@ case "$EVENT_TYPE" in
         # コマンド実行終了 / パッチ適用終了
         EXIT_CODE=$(get_field '.exit_code')
 
+        ensure_session_start
+
         if [[ "$EXIT_CODE" != "0" && -n "$EXIT_CODE" ]]; then
             STATUS="error"
         else
@@ -151,9 +177,11 @@ case "$EVENT_TYPE" in
         send_message "task.update" "$PARAMS"
         ;;
 
-    approval-requested)
-        # 承認要求
-        MESSAGE=$(get_field '.message')
+    approval-requested|waiting-for-input|input-required|user-input-required|user-input-requested|prompt-user|user-prompt|assistant-question|input-requested)
+        # 承認要求 / ユーザー入力待ち
+        MESSAGE=$(get_field '.message // .prompt // .question // .content // .text // .reason')
+
+        ensure_session_start
 
         PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
@@ -197,6 +225,8 @@ case "$EVENT_TYPE" in
     error)
         # エラー発生
         ERROR_MESSAGE=$(get_field '.error')
+
+        ensure_session_start
 
         PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \

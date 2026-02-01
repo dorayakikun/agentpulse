@@ -6,7 +6,7 @@ use tauri::{AppHandle, Emitter};
 use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 use crate::models::{Task, TaskStatus};
 use crate::notification::{NotificationManager, NotificationRequest, NotificationType};
@@ -203,6 +203,7 @@ impl ConnectionHandler {
     }
 
     async fn process_message(&self, message: &str) -> Result<JsonRpcResponse, SocketServerError> {
+        debug!(message = %message, "Socket message received");
         let request: JsonRpcRequest = serde_json::from_str(message)
             .map_err(|e| SocketServerError::ParseError(e.to_string()))?;
 
@@ -212,6 +213,12 @@ impl ConnectionHandler {
                 JsonRpcError::invalid_request("Invalid JSON-RPC version"),
             ));
         }
+
+        info!(
+            method = %request.method,
+            has_params = request.params.is_some(),
+            "Socket request parsed"
+        );
 
         let result = match request.method.as_str() {
             "task.start" => self.handle_task_start(&request).await,
@@ -380,6 +387,7 @@ impl ConnectionHandler {
                 status: t.status.as_snake_case().to_string(),
                 current_tool: t.current_tool.clone(),
                 description: t.description.clone(),
+                last_activity: t.last_activity.clone(),
                 project_path: t.project_path.clone(),
                 started_at: t.started_at.timestamp(),
                 last_updated: t.last_updated.timestamp(),

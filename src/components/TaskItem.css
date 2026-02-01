@@ -30,11 +30,19 @@
   margin-top: var(--spacing-sm);
 }
 
+.task-summary {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-primary);
+  margin: 0;
+  line-height: 1.4;
+}
+
 .current-tool {
   display: flex;
   align-items: center;
   gap: var(--spacing-xs);
   font-size: var(--font-size-sm);
+  margin-top: var(--spacing-xs);
 }
 
 .tool-label {

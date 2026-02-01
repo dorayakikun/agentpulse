@@ -124,7 +124,7 @@ case "$EVENT_TYPE" in
 
         if [[ -n "$SESSION_ID" ]]; then
             case "$NOTIFICATION_TYPE" in
-                permission_prompt|idle_prompt)
+                permission_prompt|idle_prompt|user_prompt|input_required|input-required|waiting_for_input)
                     PARAMS=$(jq -nc \
                         --arg session_id "$SESSION_ID" \
                         --arg status "waiting_for_input" \

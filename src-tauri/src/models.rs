@@ -69,6 +69,7 @@ pub struct Task {
     pub status: TaskStatus,
     pub current_tool: Option<String>,
     pub description: Option<String>,
+    pub last_activity: Option<String>,
     pub project_path: String,
     pub started_at: DateTime<Utc>,
     pub last_updated: DateTime<Utc>,
@@ -83,6 +84,7 @@ impl Task {
             status: TaskStatus::Running,
             current_tool: None,
             description: None,
+            last_activity: None,
             project_path,
             started_at: now,
             last_updated: now,
@@ -97,6 +99,15 @@ impl Task {
     pub fn update_tool(&mut self, tool: Option<String>, description: Option<String>) {
         self.current_tool = tool;
         self.description = description;
+        if let Some(desc) = &self.description {
+            if !desc.trim().is_empty() {
+                self.last_activity = Some(desc.clone());
+            }
+        } else if let Some(tool_name) = &self.current_tool {
+            if !tool_name.trim().is_empty() {
+                self.last_activity = Some(tool_name.clone());
+            }
+        }
         self.last_updated = Utc::now();
     }
 }

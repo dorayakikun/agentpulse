@@ -15,6 +15,7 @@ pub fn get_tasks(state: State<Arc<AppState>>) -> Vec<TaskEventPayload> {
             status: t.status.as_snake_case().to_string(),
             current_tool: t.current_tool.clone(),
             description: t.description.clone(),
+            last_activity: t.last_activity.clone(),
             project_path: t.project_path.clone(),
             started_at: t.started_at.timestamp(),
             last_updated: t.last_updated.timestamp(),
