@@ -2,23 +2,23 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
-    <!-- ネットワーク（クライアント接続用） -->
+    <!-- Network (client connections) -->
     <key>com.apple.security.network.client</key>
     <true/>
 
-    <!-- Unix ソケット通信用 -->
+    <!-- Unix socket communication -->
     <key>com.apple.security.network.server</key>
     <true/>
 
-    <!-- Hardened Runtime でも動的ライブラリをロード可能に -->
+    <!-- Allow dynamic library loading under Hardened Runtime -->
     <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
     <false/>
 
-    <!-- JIT コンパイル（通常不要） -->
+    <!-- JIT compilation (usually not needed) -->
     <key>com.apple.security.cs.allow-jit</key>
     <false/>
 
-    <!-- デバッガアタッチを許可（開発用、リリースでは false） -->
+    <!-- Allow debugger attach (dev only, false in release) -->
     <key>com.apple.security.cs.debugger</key>
     <false/>
 </dict>

@@ -3,9 +3,6 @@
   "identifier": "default",
   "description": "Default permissions for the app",
   "windows": ["main"],
-  "remote": {
-    "urls": ["http://localhost:*"]
-  },
   "permissions": [
     "core:default",
     "core:window:allow-show",

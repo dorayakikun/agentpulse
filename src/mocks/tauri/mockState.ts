@@ -15,7 +15,9 @@ const emit = (eventName: string, payload: unknown) => {
   if (!handlers) {
     return;
   }
-  handlers.forEach((handler) => handler({ payload }));
+  handlers.forEach((handler) => {
+    handler({ payload });
+  });
 };
 
 const addListener = <T>(eventName: string, handler: EventHandler<T>) => {

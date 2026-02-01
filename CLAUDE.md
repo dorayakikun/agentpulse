@@ -18,3 +18,5 @@ unset CODEX_NOTIFY_DEBUG
 ```
 
 Log file: `/tmp/codex-notify-debug.log`
+
+Note: Documentation comments must be written in English.

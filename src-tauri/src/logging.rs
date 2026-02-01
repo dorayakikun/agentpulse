@@ -8,7 +8,7 @@ use tracing_subscriber::{
     EnvFilter,
 };
 
-/// ログ設定
+/// Logging configuration
 pub struct LogConfig {
     pub level: Level,
     pub log_dir: Option<PathBuf>,
@@ -25,25 +25,33 @@ impl Default for LogConfig {
     }
 }
 
-/// ロギングを初期化（戻り値のガードはドロップしないこと）
+/// Initialize logging (do not drop the returned guard)
 pub fn init_logging(config: LogConfig) -> Option<WorkerGuard> {
-    let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+    let env_filter = if cfg!(debug_assertions) {
+        EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+            EnvFilter::new(format!(
+                "agentpulse={},agentpulse_lib={},tauri=warn",
+                config.level.as_str().to_lowercase(),
+                config.level.as_str().to_lowercase()
+            ))
+        })
+    } else {
         EnvFilter::new(format!(
             "agentpulse={},agentpulse_lib={},tauri=warn",
             config.level.as_str().to_lowercase(),
             config.level.as_str().to_lowercase()
         ))
-    });
+    };
 
-    // ファイル出力が設定されている場合
+    // When file output is configured
     if let Some(log_dir) = config.log_dir {
-        // ログディレクトリを作成
+        // Create log directory
         if let Err(e) = std::fs::create_dir_all(&log_dir) {
             eprintln!(
                 "Failed to create log directory {:?}: {}. Falling back to stderr-only logging.",
                 log_dir, e
             );
-            // stderr のみにフォールバック
+            // Fall back to stderr-only logging
             tracing_subscriber::registry()
                 .with(env_filter)
                 .with(
@@ -94,7 +102,7 @@ pub fn init_logging(config: LogConfig) -> Option<WorkerGuard> {
 
         Some(guard)
     } else {
-        // stderr のみ
+        // stderr only
         tracing_subscriber::registry()
             .with(env_filter)
             .with(
@@ -109,7 +117,7 @@ pub fn init_logging(config: LogConfig) -> Option<WorkerGuard> {
     }
 }
 
-/// ログディレクトリのパスを取得
+/// Get log directory path
 pub fn get_log_dir() -> Option<PathBuf> {
     #[cfg(target_os = "macos")]
     {

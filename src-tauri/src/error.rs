@@ -1,6 +1,6 @@
 use thiserror::Error;
 
-/// アプリケーションエラー型
+/// Application error type
 #[allow(dead_code)]
 #[derive(Debug, Error)]
 pub enum AppError {
@@ -23,11 +23,11 @@ pub enum AppError {
     Internal(String),
 }
 
-/// Tauri コマンド用の Result 型
+/// Result type for Tauri commands
 #[allow(dead_code)]
 pub type AppResult<T> = Result<T, AppError>;
 
-/// Tauri コマンドからの JSON レスポンス用
+/// JSON response for Tauri commands
 impl serde::Serialize for AppError {
     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
     where
@@ -42,7 +42,7 @@ impl serde::Serialize for AppError {
 }
 
 impl AppError {
-    /// エラーコード（Frontend でのハンドリング用）
+    /// Error code (for frontend handling)
     pub fn error_code(&self) -> &'static str {
         match self {
             AppError::Socket(_) => "SOCKET_ERROR",
@@ -54,7 +54,7 @@ impl AppError {
         }
     }
 
-    /// リカバリ可能かどうか
+    /// Whether the error is recoverable
     #[allow(dead_code)]
     pub fn is_recoverable(&self) -> bool {
         match self {

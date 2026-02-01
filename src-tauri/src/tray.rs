@@ -183,6 +183,11 @@ async fn run_tray_animation(app_handle: AppHandle, state: Arc<AppState>) {
 
         match mode {
             TrayMode::Running => {
+                if running_frames.is_empty() {
+                    frame_index = 0;
+                    sleep(RUNNING_FRAME_DELAY).await;
+                    continue;
+                }
                 if let Some(frame) = running_frames.get(frame_index % running_frames.len()) {
                     if let Err(err) = tray.set_icon(Some(frame.clone())) {
                         debug!(error = %err, "Failed to update running tray icon");
@@ -192,6 +197,11 @@ async fn run_tray_animation(app_handle: AppHandle, state: Arc<AppState>) {
                 sleep(RUNNING_FRAME_DELAY).await;
             }
             TrayMode::Waiting => {
+                if waiting_frames.is_empty() {
+                    frame_index = 0;
+                    sleep(WAITING_FRAME_DELAY).await;
+                    continue;
+                }
                 if let Some(frame) = waiting_frames.get(frame_index % waiting_frames.len()) {
                     if let Err(err) = tray.set_icon(Some(frame.clone())) {
                         debug!(error = %err, "Failed to update waiting tray icon");

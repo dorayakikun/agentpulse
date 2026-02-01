@@ -26,7 +26,7 @@ export const invoke = async <T>(command: string, payload?: unknown): Promise<T> 
       const data = payload as { sessionId?: string } | undefined;
       const sessionId = data?.sessionId;
       if (!sessionId) {
-        return undefined as T;
+        throw new Error("Missing sessionId in payload");
       }
       const remaining = getTasks().filter((task) => task.session_id !== sessionId);
       setTasks(remaining as Task[]);

@@ -23,7 +23,7 @@ use tracing::{error, info, Level};
 use tauri::ActivationPolicy;
 
 fn main() {
-    // ロギング初期化
+    // Initialize logging
     let log_config = LogConfig {
         level: if cfg!(debug_assertions) {
             Level::DEBUG
@@ -34,7 +34,7 @@ fn main() {
         json_format: !cfg!(debug_assertions),
     };
 
-    // ガードを保持（ドロップするとログが失われる）
+    // Hold guard (dropping it will lose logs)
     let _guard = init_logging(log_config);
 
     info!(

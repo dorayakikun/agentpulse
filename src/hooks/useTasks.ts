@@ -35,7 +35,7 @@ export function useTasks(): UseTasksReturn {
   const isMounted = useRef(true);
   const requestToken = useRef(0);
 
-  // リトライタイマーをクリア
+  // Clear retry timer
   const clearRetryTimeout = useCallback(() => {
     if (retryTimeoutId.current !== null) {
       clearTimeout(retryTimeoutId.current);
@@ -44,7 +44,7 @@ export function useTasks(): UseTasksReturn {
   }, []);
 
   const fetchTasks = useCallback(async (isRetry = false) => {
-    // 新しいリクエスト開始時にトークンを更新
+    // Update token when starting a new request
     const currentToken = isRetry ? requestToken.current : ++requestToken.current;
 
     try {
@@ -52,12 +52,12 @@ export function useTasks(): UseTasksReturn {
         setIsLoading(true);
         setError(null);
         retryCount.current = 0;
-        clearRetryTimeout(); // 新しいリクエスト時に既存のリトライをキャンセル
+        clearRetryTimeout(); // Cancel existing retry when starting a new request
       }
 
       const result = await invoke<Task[]>('get_tasks');
 
-      // アンマウント済み or 古いリクエストの場合は無視
+      // Ignore if unmounted or if this is a stale request
       if (!isMounted.current || currentToken !== requestToken.current) {
         return;
       }
@@ -66,7 +66,7 @@ export function useTasks(): UseTasksReturn {
       retryCount.current = 0;
       setIsLoading(false);
     } catch (err) {
-      // アンマウント済み or 古いリクエストの場合は無視
+      // Ignore if unmounted or if this is a stale request
       if (!isMounted.current || currentToken !== requestToken.current) {
         return;
       }
@@ -108,7 +108,7 @@ export function useTasks(): UseTasksReturn {
     let unlisten: UnlistenFn | null = null;
 
     const init = async () => {
-      // Tauri ブリッジの準備を待つ
+      // Wait for the Tauri bridge to be ready
       const isReady = await waitForTauri();
       if (!isReady || cancelled || !isMounted.current) {
         if (!isReady && !cancelled && isMounted.current) {
@@ -131,7 +131,7 @@ export function useTasks(): UseTasksReturn {
             }
           });
 
-          // listen() 完了時にアンマウント済みなら即座にクリーンアップ
+          // If unmounted by the time listen() resolves, clean up immediately
           if (cancelled) {
             unlistenFn();
           } else {

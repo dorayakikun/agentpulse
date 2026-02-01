@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/install-codex-notify.sh
-# Codex の config.toml に notify 設定を追加するスクリプト
+# Adds notify configuration to Codex config.toml
 
 set -euo pipefail
 
@@ -8,26 +8,26 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 NOTIFY_SCRIPT="$SCRIPT_DIR/codex-notify.sh"
 CONFIG_FILE="$HOME/.codex/config.toml"
 
-# スクリプトに実行権限を付与
+# Ensure the script is executable
 chmod +x "$NOTIFY_SCRIPT"
 
-# 設定ディレクトリがなければ作成
+# Create config directory if missing
 mkdir -p "$(dirname "$CONFIG_FILE")"
 
-# notify 設定行
+# notify config line
 NOTIFY_LINE="notify = [\"bash\", \"$NOTIFY_SCRIPT\"]"
 
-# 既存の config.toml がある場合
+# If config.toml already exists
 if [[ -f "$CONFIG_FILE" ]]; then
     echo "Existing config found at $CONFIG_FILE"
 
-    # バックアップを作成
+    # Create backup
     cp "$CONFIG_FILE" "${CONFIG_FILE}.backup.$(date +%Y%m%d%H%M%S)"
 
-    # notify 設定が既に存在するか確認（インデント対応、POSIX互換の正規表現を使用）
+    # Check if notify config already exists (POSIX-compatible regex)
     if grep -q "^[[:space:]]*notify[[:space:]]*=" "$CONFIG_FILE"; then
         echo "Updating existing notify configuration..."
-        # 既存の notify 行を置換（インデントを保持）
+        # Replace existing notify line (preserve indentation)
         sed -i.bak "s|^\([[:space:]]*\)notify[[:space:]]*=.*|\1$NOTIFY_LINE|" "$CONFIG_FILE"
         rm -f "${CONFIG_FILE}.bak"
     else

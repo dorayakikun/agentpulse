@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/claude-code-hook.sh
-# Claude Code Hooks から呼び出されるスクリプト
+# Script invoked from Claude Code Hooks
 # Usage: claude-code-hook.sh <event_type>
 #   event_type: session_start | pre_tool | post_tool | notification | session_end
 
@@ -37,23 +37,23 @@ if [[ -z "$JQ_BIN" ]]; then
     exit 0
 fi
 
-# ソケットが存在しない場合は終了（アプリ未起動）
+# Exit if socket does not exist (app not running)
 if [[ ! -S "$SOCKET" ]]; then
     exit 0
 fi
 
-# stdin から JSON を読み取り
+# Read JSON from stdin
 INPUT=$(cat)
 
 log_debug "[claude-code-hook] Script called at $(date)"
 log_debug "[claude-code-hook] EVENT_TYPE: $EVENT_TYPE"
 log_debug "[claude-code-hook] INPUT: $INPUT"
 
-# デバッグ用（開発時のみ有効化）
+# Debug only (enable in development)
 # echo "[DEBUG] Event: $EVENT_TYPE" >&2
 # echo "[DEBUG] Input: $INPUT" >&2
 
-# JSON-RPC メッセージを送信する関数
+# Send JSON-RPC message
 send_message() {
     local method="$1"
     local params="$2"
@@ -66,15 +66,15 @@ send_message() {
     printf '%s\n' "$message" | nc -U "$SOCKET" -w 1 2>/dev/null || true
 }
 
-# フィールド抽出ヘルパー
+# Field extraction helper
 get_field() {
     echo "$INPUT" | "$JQ_BIN" -r "$1 // empty"
 }
 
-# イベント種別に応じた処理
+# Per-event handling
 case "$EVENT_TYPE" in
     session_start)
-        # セッション開始
+        # Session start
         SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         CWD=$(get_field '.cwd')
         if [[ -z "$CWD" ]]; then
@@ -95,12 +95,12 @@ case "$EVENT_TYPE" in
         ;;
 
     pre_tool)
-        # ツール実行前
+        # Before tool execution
         SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         TOOL_NAME=$(get_field '.tool_name')
         TOOL_INPUT=$(get_field '.tool_input | tostring' 2>/dev/null || echo "")
 
-        # tool_input から description を抽出（可能であれば）
+        # Extract description from tool_input (if possible)
         DESCRIPTION=""
         if [[ -n "$TOOL_INPUT" ]]; then
             DESCRIPTION=$(echo "$TOOL_INPUT" | "$JQ_BIN" -r '.description // .file_path // .command // empty' 2>/dev/null || echo "")
@@ -123,7 +123,7 @@ case "$EVENT_TYPE" in
         ;;
 
     post_tool)
-        # ツール実行後
+        # After tool execution
         SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         TOOL_NAME=$(get_field '.tool_name')
         TOOL_ERROR=$(get_field '.tool_error')
@@ -152,7 +152,7 @@ case "$EVENT_TYPE" in
         ;;
 
     notification)
-        # 通知イベント（permission_prompt, idle_prompt）
+        # Notification event (permission_prompt, idle_prompt)
         SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         NOTIFICATION_TYPE=$(get_field '.notification_type // .type')
         MESSAGE=$(get_field '.message')
@@ -176,7 +176,7 @@ case "$EVENT_TYPE" in
         ;;
 
     session_end)
-        # セッション終了
+        # Session end
         SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         EXIT_REASON=$(get_field '.reason')
 
@@ -202,7 +202,7 @@ case "$EVENT_TYPE" in
         ;;
 
     *)
-        # 不明なイベントは無視
+        # Ignore unknown events
         ;;
 esac
 

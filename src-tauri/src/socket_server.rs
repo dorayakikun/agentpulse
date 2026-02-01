@@ -203,7 +203,11 @@ impl ConnectionHandler {
     }
 
     async fn process_message(&self, message: &str) -> Result<JsonRpcResponse, SocketServerError> {
-        debug!(message = %message, "Socket message received");
+        #[cfg(debug_assertions)]
+        {
+            let message_len = message.len();
+            debug!(message_len, "Socket message received");
+        }
         let request: JsonRpcRequest = serde_json::from_str(message)
             .map_err(|e| SocketServerError::ParseError(e.to_string()))?;
 
