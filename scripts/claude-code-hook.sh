@@ -9,6 +9,15 @@ set -euo pipefail
 # Claude Code hooks run in a non-interactive shell; ensure common brew paths exist.
 PATH="/opt/homebrew/bin:/usr/local/bin:$PATH"
 
+DEBUG_LOG="/tmp/claude-code-hook-debug.log"
+DEBUG="${CLAUDE_HOOK_DEBUG:-0}"
+
+log_debug() {
+    if [[ "$DEBUG" == "1" ]]; then
+        echo "$1" >> "$DEBUG_LOG"
+    fi
+}
+
 SOCKET="/tmp/agentpulse.sock"
 EVENT_TYPE="${1:-}"
 
@@ -36,6 +45,10 @@ fi
 # stdin から JSON を読み取り
 INPUT=$(cat)
 
+log_debug "[claude-code-hook] Script called at $(date)"
+log_debug "[claude-code-hook] EVENT_TYPE: $EVENT_TYPE"
+log_debug "[claude-code-hook] INPUT: $INPUT"
+
 # デバッグ用（開発時のみ有効化）
 # echo "[DEBUG] Event: $EVENT_TYPE" >&2
 # echo "[DEBUG] Input: $INPUT" >&2
@@ -62,8 +75,11 @@ get_field() {
 case "$EVENT_TYPE" in
     session_start)
         # セッション開始
-        SESSION_ID=$(get_field '.session_id')
+        SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         CWD=$(get_field '.cwd')
+        if [[ -z "$CWD" ]]; then
+            CWD="${CLAUDE_PROJECT_DIR:-}"
+        fi
 
         if [[ -n "$SESSION_ID" && -n "$CWD" ]]; then
             PARAMS=$(jq -nc \
@@ -80,7 +96,7 @@ case "$EVENT_TYPE" in
 
     pre_tool)
         # ツール実行前
-        SESSION_ID=$(get_field '.session_id')
+        SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         TOOL_NAME=$(get_field '.tool_name')
         TOOL_INPUT=$(get_field '.tool_input | tostring' 2>/dev/null || echo "")
 
@@ -108,7 +124,7 @@ case "$EVENT_TYPE" in
 
     post_tool)
         # ツール実行後
-        SESSION_ID=$(get_field '.session_id')
+        SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         TOOL_NAME=$(get_field '.tool_name')
         TOOL_ERROR=$(get_field '.tool_error')
 
@@ -137,7 +153,7 @@ case "$EVENT_TYPE" in
 
     notification)
         # 通知イベント（permission_prompt, idle_prompt）
-        SESSION_ID=$(get_field '.session_id')
+        SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         NOTIFICATION_TYPE=$(get_field '.notification_type // .type')
         MESSAGE=$(get_field '.message')
 
@@ -161,7 +177,7 @@ case "$EVENT_TYPE" in
 
     session_end)
         # セッション終了
-        SESSION_ID=$(get_field '.session_id')
+        SESSION_ID=$(get_field '.session_id // ."session-id" // .sessionId')
         EXIT_REASON=$(get_field '.reason')
 
         if [[ -n "$SESSION_ID" ]]; then

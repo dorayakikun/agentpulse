@@ -347,6 +347,17 @@ impl ConnectionHandler {
             .get_task(&params.session_id)
             .ok_or_else(|| SocketServerError::SessionNotFound(params.session_id.clone()))?;
 
+        // Update summary/last activity if provided
+        if let Some(description) = &params.description {
+            if !description.trim().is_empty() {
+                let event = crate::models::AgentEvent::AgentTurnComplete {
+                    session_id: params.session_id.clone(),
+                    description: Some(description.clone()),
+                };
+                self.state.handle_event(event);
+            }
+        }
+
         // End session via event with status
         let status: TaskStatus = params.status.into();
         let event = crate::models::AgentEvent::SessionEnd {
