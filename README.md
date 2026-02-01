@@ -11,7 +11,7 @@ A macOS menu bar app that tracks and lists the progress of AI agents such as Cla
 
 ## Architecture
 
-```
+```text
 ┌─────────────────────────────────────────────────┐
 │              AgentPulse                         │
 │         (Tauri menu bar app)                    │
@@ -164,7 +164,7 @@ When running Playwright, `VITE_E2E=1` is set automatically and `@tauri-apps/api`
 ## Troubleshooting
 
 | Problem | Cause | Fix |
-|---------|-------|-----|
+| --------- | ------- | ----- |
 | Tasks are not shown | Socket not connected | Start the app and check with `ls -la /tmp/agentpulse.sock` |
 | jq: command not found | jq not installed | `brew install jq` (macOS) |
 | Permission denied | Script is not executable | `chmod +x scripts/*.sh` |

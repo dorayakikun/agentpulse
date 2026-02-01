@@ -49,8 +49,9 @@ pub struct SocketServer {
 ```
 
 ### 2.2 Supported methods
+
 | Method | Description | Params |
-|--------|-------------|--------|
+| -------- | ------------- | -------- |
 | `task.start` | Start a new session | `TaskStartParams` |
 | `task.update` | Update session state | `TaskUpdateParams` |
 | `task.end` | End a session | `TaskEndParams` |
@@ -91,4 +92,3 @@ pub struct TaskEndParams {
 - Connect with `nc -U /tmp/agentpulse.sock`
 - Send `ping` request and verify response
 - Send `task.start/update/end` and verify UI updates
-

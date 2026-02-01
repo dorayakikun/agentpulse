@@ -48,6 +48,7 @@ fi
 if [[ -f "$DMG_PATH" ]]; then
     echo "Submitting for notarization..."
     xcrun notarytool submit "$DMG_PATH" \
+        --primary-bundle-id "$BUNDLE_ID" \
         --apple-id "$APPLE_ID" \
         --password "$APPLE_ID_PASSWORD" \
         --team-id "$APPLE_TEAM_ID" \

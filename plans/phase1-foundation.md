@@ -116,8 +116,9 @@ npm run tauri build
 ```
 
 ### 10.2 Checklist
+
 | Item | Expected |
-|------|----------|
+| ------ | ---------- |
 | Menu bar | Icon is visible |
 | Left click | Popover shows |
 | Second click | Popover hides |
@@ -128,7 +129,7 @@ npm run tauri build
 ## Deliverables
 
 | File | Purpose |
-|------|---------|
+| ------ | --------- |
 | `src-tauri/Cargo.toml` | Rust dependencies |
 | `src-tauri/tauri.conf.json` | Tauri config |
 | `src-tauri/capabilities/default.json` | Capabilities |

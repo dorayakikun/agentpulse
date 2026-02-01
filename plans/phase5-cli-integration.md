@@ -15,7 +15,7 @@ brew install jq  # macOS
 ## 2. Claude Code hooks
 
 ### File layout
-```
+```text
 scripts/
 ├── claude-code-hook.sh
 └── install-claude-hooks.sh
@@ -29,7 +29,7 @@ scripts/
 ## 3. Codex notify
 
 ### File layout
-```
+```text
 scripts/
 ├── codex-notify.sh
 └── install-codex-notify.sh
