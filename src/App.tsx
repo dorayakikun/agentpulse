@@ -14,7 +14,14 @@ function App() {
     <div className="app">
       <Header taskCount={tasks.length} />
       {error && (
-        <ErrorBanner message={error} onRetry={refresh} onDismiss={clearError} />
+        <ErrorBanner
+          message={error}
+          onRetry={() => {
+            clearError();
+            void refresh();
+          }}
+          onDismiss={clearError}
+        />
       )}
       <main className="main">
         {isLoading ? (

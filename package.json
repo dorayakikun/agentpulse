@@ -8,6 +8,7 @@
     "build": "tsc && vite build",
     "preview": "vite preview",
     "tauri": "tauri",
+    "test": "playwright test",
     "lint": "echo 'No linter configured'",
     "typecheck": "tsc --noEmit"
   },
@@ -20,10 +21,11 @@
   },
   "devDependencies": {
     "@tauri-apps/cli": "^2",
+    "@playwright/test": "^1.49.1",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@vitejs/plugin-react": "^4.3.1",
     "typescript": "^5.4.5",
-    "vite": "^5.4.2"
+    "vite": "^7.3.1"
   }
 }

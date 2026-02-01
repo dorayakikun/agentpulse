@@ -145,6 +145,23 @@ notify = ["bash", "/path/to/scripts/codex-notify.sh"]
 5. Claude Code または Codex でセッションを開始
 6. タスク一覧にセッションが表示されることを確認
 
+### E2E テスト (Playwright)
+
+Tauri のブリッジをモック化した Web UI テストを `npm test` で実行できます。
+
+```bash
+# 依存関係をインストール
+npm install
+
+# Playwright ブラウザをインストール（初回のみ）
+npx playwright install
+
+# テスト実行
+npm test
+```
+
+Playwright 実行時は `VITE_E2E=1` が自動で付与され、`@tauri-apps/api` がモック実装に差し替わります。
+
 ## トラブルシューティング
 
 | 問題 | 原因 | 解決方法 |

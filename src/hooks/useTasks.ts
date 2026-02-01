@@ -111,6 +111,10 @@ export function useTasks(): UseTasksReturn {
       // Tauri ブリッジの準備を待つ
       const isReady = await waitForTauri();
       if (!isReady || cancelled || !isMounted.current) {
+        if (!isReady && !cancelled && isMounted.current) {
+          setIsLoading(false);
+          setError('Tauri bridge is not available.');
+        }
         return;
       }
 
