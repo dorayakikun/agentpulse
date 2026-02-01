@@ -6,7 +6,7 @@ use tauri::{AppHandle, Emitter};
 use thiserror::Error;
 use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::net::{UnixListener, UnixStream};
-use tracing::{error, info, warn};
+use tracing::{debug, error, info, warn};
 
 use crate::models::{Task, TaskStatus};
 use crate::notification::{NotificationManager, NotificationRequest, NotificationType};
@@ -73,7 +73,7 @@ pub struct SocketServerConfig {
 impl Default for SocketServerConfig {
     fn default() -> Self {
         Self {
-            socket_path: PathBuf::from("/tmp/ai-agent-status.sock"),
+            socket_path: PathBuf::from("/tmp/agentpulse.sock"),
         }
     }
 }
@@ -203,6 +203,11 @@ impl ConnectionHandler {
     }
 
     async fn process_message(&self, message: &str) -> Result<JsonRpcResponse, SocketServerError> {
+        #[cfg(debug_assertions)]
+        {
+            let message_len = message.len();
+            debug!(message_len, "Socket message received");
+        }
         let request: JsonRpcRequest = serde_json::from_str(message)
             .map_err(|e| SocketServerError::ParseError(e.to_string()))?;
 
@@ -212,6 +217,12 @@ impl ConnectionHandler {
                 JsonRpcError::invalid_request("Invalid JSON-RPC version"),
             ));
         }
+
+        info!(
+            method = %request.method,
+            has_params = request.params.is_some(),
+            "Socket request parsed"
+        );
 
         let result = match request.method.as_str() {
             "task.start" => self.handle_task_start(&request).await,
@@ -340,6 +351,17 @@ impl ConnectionHandler {
             .get_task(&params.session_id)
             .ok_or_else(|| SocketServerError::SessionNotFound(params.session_id.clone()))?;
 
+        // Update summary/last activity if provided
+        if let Some(description) = &params.description {
+            if !description.trim().is_empty() {
+                let event = crate::models::AgentEvent::AgentTurnComplete {
+                    session_id: params.session_id.clone(),
+                    description: Some(description.clone()),
+                };
+                self.state.handle_event(event);
+            }
+        }
+
         // End session via event with status
         let status: TaskStatus = params.status.into();
         let event = crate::models::AgentEvent::SessionEnd {
@@ -380,6 +402,7 @@ impl ConnectionHandler {
                 status: t.status.as_snake_case().to_string(),
                 current_tool: t.current_tool.clone(),
                 description: t.description.clone(),
+                last_activity: t.last_activity.clone(),
                 project_path: t.project_path.clone(),
                 started_at: t.started_at.timestamp(),
                 last_updated: t.last_updated.timestamp(),
@@ -411,7 +434,14 @@ impl ConnectionHandler {
             .notification_manager
             .send_notification(&self.app_handle, request)
         {
-            warn!(error = ?e, "Failed to send notification");
+            match e {
+                crate::notification::NotificationError::RateLimited => {
+                    debug!(error = ?e, "Notification suppressed by local rate limiter");
+                }
+                _ => {
+                    warn!(error = ?e, "Failed to send notification");
+                }
+            }
         }
     }
 }

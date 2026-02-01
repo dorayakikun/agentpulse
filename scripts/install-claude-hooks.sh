@@ -1,6 +1,6 @@
 #!/bin/bash
 # scripts/install-claude-hooks.sh
-# Claude Code の settings.json に Hooks 設定を追加するスクリプト
+# Adds Hooks configuration to Claude Code settings.json
 
 set -euo pipefail
 
@@ -8,13 +8,13 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 HOOK_SCRIPT="$SCRIPT_DIR/claude-code-hook.sh"
 SETTINGS_FILE="$HOME/.claude/settings.json"
 
-# スクリプトに実行権限を付与
+# Ensure the script is executable
 chmod +x "$HOOK_SCRIPT"
 
-# 設定ディレクトリがなければ作成
+# Create settings directory if missing
 mkdir -p "$(dirname "$SETTINGS_FILE")"
 
-# 新しい hooks 設定
+# New hooks configuration
 HOOKS_CONFIG=$(cat <<EOF
 {
   "hooks": {
@@ -61,11 +61,11 @@ HOOKS_CONFIG=$(cat <<EOF
 EOF
 )
 
-# 既存の settings.json がある場合はマージ
+# Merge if settings.json already exists
 if [[ -f "$SETTINGS_FILE" ]]; then
     echo "Existing settings found at $SETTINGS_FILE"
 
-    # 既存の hooks があるかチェック
+    # Check for existing hooks
     EXISTING_HOOKS=$(jq -r '.hooks // empty' "$SETTINGS_FILE")
 
     if [[ -n "$EXISTING_HOOKS" ]]; then
@@ -73,7 +73,7 @@ if [[ -f "$SETTINGS_FILE" ]]; then
         echo "Existing hooks will be preserved and new hooks will be merged."
         echo ""
 
-        # ディープマージ: 既存の hooks 配列に新しい hooks を追加
+        # Deep merge: append new hooks to existing hook arrays
         MERGED=$(jq -s '
             def deep_merge:
                 reduce .[] as $item ({}; . as $base |
@@ -91,11 +91,11 @@ if [[ -f "$SETTINGS_FILE" ]]; then
         ' "$SETTINGS_FILE" <(echo "$HOOKS_CONFIG"))
     else
         echo "Merging hooks configuration..."
-        # hooks がない場合は単純マージ
+        # Simple merge when hooks are missing
         MERGED=$(jq -s '.[0] * .[1]' "$SETTINGS_FILE" <(echo "$HOOKS_CONFIG"))
     fi
 
-    # バックアップを作成
+    # Create backup
     cp "$SETTINGS_FILE" "${SETTINGS_FILE}.backup.$(date +%Y%m%d%H%M%S)"
 
     echo "$MERGED" > "$SETTINGS_FILE"

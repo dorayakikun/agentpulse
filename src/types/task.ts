@@ -15,6 +15,7 @@ export interface Task {
   status: TaskStatus;
   current_tool?: string;
   description?: string;
+  last_activity?: string;
   project_path: string;
   started_at: number; // Unix timestamp (seconds)
   last_updated: number; // Unix timestamp (seconds)

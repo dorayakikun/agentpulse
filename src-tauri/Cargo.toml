@@ -1,12 +1,12 @@
 [package]
-name = "ai-agent-status"
+name = "agentpulse"
 version = "0.1.0"
-description = "AI Agent Status Monitor"
+description = "AgentPulse"
 authors = ["you"]
 edition = "2021"
 
 [lib]
-name = "ai_agent_status_lib"
+name = "agentpulse_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

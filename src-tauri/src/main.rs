@@ -23,7 +23,7 @@ use tracing::{error, info, Level};
 use tauri::ActivationPolicy;
 
 fn main() {
-    // ロギング初期化
+    // Initialize logging
     let log_config = LogConfig {
         level: if cfg!(debug_assertions) {
             Level::DEBUG
@@ -34,12 +34,12 @@ fn main() {
         json_format: !cfg!(debug_assertions),
     };
 
-    // ガードを保持（ドロップするとログが失われる）
+    // Hold guard (dropping it will lose logs)
     let _guard = init_logging(log_config);
 
     info!(
         version = env!("CARGO_PKG_VERSION"),
-        "Starting AI Agent Status Monitor"
+        "Starting AgentPulse"
     );
 
     let app_state = Arc::new(AppState::new());
@@ -85,7 +85,7 @@ fn main() {
         .run(|_app_handle, event| {
             if let RunEvent::Exit = event {
                 // Cleanup socket file on exit
-                let _ = std::fs::remove_file("/tmp/ai-agent-status.sock");
+                let _ = std::fs::remove_file("/tmp/agentpulse.sock");
                 info!("Socket file cleaned up");
             }
         });

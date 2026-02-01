@@ -62,7 +62,7 @@ pub enum NotificationError {
 
 /// Rate limiter for notifications
 struct NotificationRateLimiter {
-    last_notification: RwLock<HashMap<String, Instant>>,
+    last_notification: RwLock<HashMap<(String, NotificationType), Instant>>,
     rate_limit_duration: Duration,
 }
 
@@ -74,13 +74,15 @@ impl NotificationRateLimiter {
         }
     }
 
-    fn check_and_update(&self, session_id: &str) -> bool {
+    fn check_and_update(&self, session_id: &str, notification_type: NotificationType) -> bool {
         let now = Instant::now();
 
         // Check with read lock
         {
             let last_notifications = self.last_notification.read().unwrap();
-            if let Some(last_time) = last_notifications.get(session_id) {
+            if let Some(last_time) =
+                last_notifications.get(&(session_id.to_string(), notification_type))
+            {
                 if now.duration_since(*last_time) < self.rate_limit_duration {
                     return false;
                 }
@@ -90,7 +92,7 @@ impl NotificationRateLimiter {
         // Update with write lock
         {
             let mut last_notifications = self.last_notification.write().unwrap();
-            last_notifications.insert(session_id.to_string(), now);
+            last_notifications.insert((session_id.to_string(), notification_type), now);
         }
 
         true
@@ -98,7 +100,7 @@ impl NotificationRateLimiter {
 
     fn cleanup_session(&self, session_id: &str) {
         let mut last_notifications = self.last_notification.write().unwrap();
-        last_notifications.remove(session_id);
+        last_notifications.retain(|(id, _), _| id != session_id);
     }
 }
 
@@ -133,7 +135,10 @@ impl NotificationManager {
         }
 
         // Check rate limit
-        if !self.rate_limiter.check_and_update(&request.session_id) {
+        if !self
+            .rate_limiter
+            .check_and_update(&request.session_id, request.notification_type)
+        {
             return Err(NotificationError::RateLimited);
         }
 
@@ -199,17 +204,18 @@ mod tests {
     #[test]
     fn test_rate_limiter() {
         let limiter = NotificationRateLimiter::new(1);
-        assert!(limiter.check_and_update("session1"));
-        assert!(!limiter.check_and_update("session1")); // Rate limited
-        assert!(limiter.check_and_update("session2")); // Different session is OK
+        assert!(limiter.check_and_update("session1", NotificationType::TaskCompleted));
+        assert!(!limiter.check_and_update("session1", NotificationType::TaskCompleted)); // Rate limited
+        assert!(limiter.check_and_update("session1", NotificationType::WaitingForInput)); // Different type is OK
+        assert!(limiter.check_and_update("session2", NotificationType::TaskCompleted)); // Different session is OK
     }
 
     #[test]
     fn test_rate_limiter_cleanup() {
         let limiter = NotificationRateLimiter::new(60);
-        limiter.check_and_update("session1");
+        limiter.check_and_update("session1", NotificationType::TaskCompleted);
         limiter.cleanup_session("session1");
         // After cleanup, should be able to send again (though still rate limited by time)
-        assert!(limiter.check_and_update("session1"));
+        assert!(limiter.check_and_update("session1", NotificationType::TaskCompleted));
     }
 }

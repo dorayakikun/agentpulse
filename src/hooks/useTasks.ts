@@ -7,6 +7,16 @@ import { getUserMessage } from '../types/error';
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 
+const waitForTauri = async (maxRetries = 10, delay = 100): Promise<boolean> => {
+  for (let i = 0; i < maxRetries; i++) {
+    if (typeof window !== 'undefined' && (window as any).__TAURI_INTERNALS__) {
+      return true;
+    }
+    await new Promise(resolve => setTimeout(resolve, delay));
+  }
+  return false;
+};
+
 interface UseTasksReturn {
   tasks: Task[];
   isLoading: boolean;
@@ -25,7 +35,7 @@ export function useTasks(): UseTasksReturn {
   const isMounted = useRef(true);
   const requestToken = useRef(0);
 
-  // リトライタイマーをクリア
+  // Clear retry timer
   const clearRetryTimeout = useCallback(() => {
     if (retryTimeoutId.current !== null) {
       clearTimeout(retryTimeoutId.current);
@@ -34,7 +44,7 @@ export function useTasks(): UseTasksReturn {
   }, []);
 
   const fetchTasks = useCallback(async (isRetry = false) => {
-    // 新しいリクエスト開始時にトークンを更新
+    // Update token when starting a new request
     const currentToken = isRetry ? requestToken.current : ++requestToken.current;
 
     try {
@@ -42,12 +52,12 @@ export function useTasks(): UseTasksReturn {
         setIsLoading(true);
         setError(null);
         retryCount.current = 0;
-        clearRetryTimeout(); // 新しいリクエスト時に既存のリトライをキャンセル
+        clearRetryTimeout(); // Cancel existing retry when starting a new request
       }
 
       const result = await invoke<Task[]>('get_tasks');
 
-      // アンマウント済み or 古いリクエストの場合は無視
+      // Ignore if unmounted or if this is a stale request
       if (!isMounted.current || currentToken !== requestToken.current) {
         return;
       }
@@ -56,7 +66,7 @@ export function useTasks(): UseTasksReturn {
       retryCount.current = 0;
       setIsLoading(false);
     } catch (err) {
-      // アンマウント済み or 古いリクエストの場合は無視
+      // Ignore if unmounted or if this is a stale request
       if (!isMounted.current || currentToken !== requestToken.current) {
         return;
       }
@@ -97,31 +107,45 @@ export function useTasks(): UseTasksReturn {
     let cancelled = false;
     let unlisten: UnlistenFn | null = null;
 
-    // Initial fetch
-    fetchTasks();
-
-    // Setup event listener for real-time updates
-    const setupListener = async () => {
-      try {
-        const unlistenFn = await listen<Task[]>('tasks-updated', (event) => {
-          if (isMounted.current) {
-            setTasks(event.payload);
-            setError(null);
-          }
-        });
-
-        // listen() 完了時にアンマウント済みなら即座にクリーンアップ
-        if (cancelled) {
-          unlistenFn();
-        } else {
-          unlisten = unlistenFn;
+    const init = async () => {
+      // Wait for the Tauri bridge to be ready
+      const isReady = await waitForTauri();
+      if (!isReady || cancelled || !isMounted.current) {
+        if (!isReady && !cancelled && isMounted.current) {
+          setIsLoading(false);
+          setError('Tauri bridge is not available.');
         }
-      } catch (err) {
-        console.error('Failed to setup event listener:', err);
+        return;
       }
+
+      // Initial fetch
+      fetchTasks();
+
+      // Setup event listener for real-time updates
+      const setupListener = async () => {
+        try {
+          const unlistenFn = await listen<Task[]>('tasks-updated', (event) => {
+            if (isMounted.current) {
+              setTasks(event.payload);
+              setError(null);
+            }
+          });
+
+          // If unmounted by the time listen() resolves, clean up immediately
+          if (cancelled) {
+            unlistenFn();
+          } else {
+            unlisten = unlistenFn;
+          }
+        } catch (err) {
+          console.error('Failed to setup event listener:', err);
+        }
+      };
+
+      setupListener();
     };
 
-    setupListener();
+    init();
 
     // Cleanup on unmount
     return () => {

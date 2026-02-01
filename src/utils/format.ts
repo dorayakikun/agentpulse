@@ -37,3 +37,14 @@ export function truncate(str: string, maxLength: number): string {
   }
   return str.slice(0, maxLength - 1) + "\u2026";
 }
+
+/**
+ * Humanize tool name for display
+ */
+export function humanizeToolName(toolName: string): string {
+  const normalized = toolName.replace(/[_-]+/g, " ").trim();
+  if (!normalized) {
+    return toolName;
+  }
+  return normalized.replace(/\b\w/g, (char) => char.toUpperCase());
+}

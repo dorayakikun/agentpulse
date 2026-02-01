@@ -1,39 +1,39 @@
-# AI Agent Status Monitor - 要件定義
+# AI Agent Status Monitor - Requirements
 
-## 概要
-Claude Code / Codex を複数動かした時にタスクの進捗状況を一覧管理するメニューバーアプリ
+## Overview
+A menu bar app that lists and manages task progress when running multiple Claude Code / Codex sessions.
 
-## 詳細計画ファイル
-- **Phase 1**: `./phase1-foundation.md` - 基盤構築の詳細計画
-- **Phase 2**: `./phase2-ipc-server.md` - IPC サーバー実装の詳細計画
-- **Phase 3**: `./phase3-notification.md` - 通知機能の詳細計画
-- **Phase 4**: `./phase4-frontend.md` - Frontend UI 実装の詳細計画
-- **Phase 5**: `./phase5-cli-integration.md` - CLI ツール連携の詳細計画
-- **Phase 6**: `./phase6-quality.md` - 品質向上の詳細計画
+## Detailed plan files
+- **Phase 1**: `./phase1-foundation.md` - Detailed plan for foundation work
+- **Phase 2**: `./phase2-ipc-server.md` - Detailed plan for IPC server implementation
+- **Phase 3**: `./phase3-notification.md` - Detailed plan for notifications
+- **Phase 4**: `./phase4-frontend.md` - Detailed plan for frontend UI
+- **Phase 5**: `./phase5-cli-integration.md` - Detailed plan for CLI tool integration
+- **Phase 6**: `./phase6-quality.md` - Detailed plan for quality improvements
 
-## 確定要件
+## Confirmed requirements
 
-| 項目 | 内容 |
-|------|------|
-| 言語/FW | Rust + Tauri 2.0 |
-| UI形式 | macOS メニューバーアプリ |
-| 対応OS | macOS (優先)、将来的に Linux/Windows |
-| 履歴保存 | 不要（実行中タスクのみ） |
-| 通知 | OS ネイティブ通知 |
-| CC連携 | Hooks 機能 |
-| Codex連携 | notify 設定 |
+| Item | Details |
+|------|---------|
+| Language/FW | Rust + Tauri 2.0 |
+| UI form | macOS menu bar app |
+| Supported OS | macOS (primary), Linux/Windows later |
+| History storage | Not required (only active tasks) |
+| Notifications | Native OS notifications |
+| Claude Code integration | Hooks feature |
+| Codex integration | notify configuration |
 
-## アーキテクチャ
+## Architecture
 
 ```
 ┌─────────────────────────────────────────────────┐
 │         AI Agent Status Monitor                 │
-│         (Tauri メニューバーアプリ)               │
+│         (Tauri menu bar app)                    │
 ├─────────────────────────────────────────────────┤
 │  Frontend (React)  ◄─IPC─►  Backend (Rust)      │
-│  - タスク一覧 UI            - 状態管理          │
-│                             - Socket Server     │
-│                             - 通知処理          │
+│  - Task list UI            - State management   │
+│                             - Socket server     │
+│                             - Notifications     │
 └───────────────────────┬─────────────────────────┘
                         │
               Unix Domain Socket
@@ -45,7 +45,7 @@ Claude Code / Codex を複数動かした時にタスクの進捗状況を一覧
     (Hooks)         (Hooks)        (notify)
 ```
 
-## ディレクトリ構造
+## Directory structure
 
 ```
 ai-agent-status/
@@ -53,17 +53,17 @@ ai-agent-status/
 │   ├── Cargo.toml
 │   ├── tauri.conf.json
 │   └── src/
-│       ├── main.rs           # エントリポイント
-│       ├── lib.rs            # メインライブラリ
-│       ├── models.rs         # データモデル
-│       ├── state.rs          # 状態管理
-│       ├── socket_server.rs  # UDS サーバー
-│       ├── notification.rs   # 通知処理
-│       ├── tray.rs           # メニューバー
-│       └── commands.rs       # Tauri コマンド
+│       ├── main.rs           # entry point
+│       ├── lib.rs            # main library
+│       ├── models.rs         # data models
+│       ├── state.rs          # state management
+│       ├── socket_server.rs  # UDS server
+│       ├── notification.rs   # notifications
+│       ├── tray.rs           # menu bar
+│       └── commands.rs       # Tauri commands
 ├── src/
 │   ├── main.tsx
-│   ├── App.tsx               # メイン UI
+│   ├── App.tsx               # main UI
 │   ├── components/
 │   │   ├── TaskList.tsx
 │   │   ├── TaskItem.tsx
@@ -71,22 +71,22 @@ ai-agent-status/
 │   └── hooks/
 │       └── useTasks.ts
 ├── scripts/
-│   ├── claude-code-hook.sh   # CC 用フック (Bash)
-│   └── codex-notify.sh       # Codex 用通知 (Bash)
+│   ├── claude-code-hook.sh   # Claude Code hook (Bash)
+│   └── codex-notify.sh       # Codex notify (Bash)
 ├── package.json
 └── README.md
 ```
 
-## 主要データモデル
+## Key data models
 
 ```rust
 pub enum AgentSource { ClaudeCode, Codex }
 
 pub enum TaskStatus {
-    Running,           // 実行中
-    WaitingForInput,   // 入力待ち
-    Completed,         // 完了
-    Error,             // エラー
+    Running,           // running
+    WaitingForInput,   // waiting for input
+    Completed,         // completed
+    Error,             // error
 }
 
 pub struct Task {
@@ -101,38 +101,38 @@ pub struct Task {
 }
 ```
 
-## 開発ステップ
+## Development steps
 
-### Phase 1: 基盤構築
-1. `npm create tauri-app@latest` でプロジェクト作成
-2. メニューバーアプリ設定 (`tauri.conf.json`)
-3. 状態管理実装 (`state.rs`)
+### Phase 1: Foundation
+1. Create the project with `npm create tauri-app@latest`
+2. Configure menu bar app (`tauri.conf.json`)
+3. Implement state management (`state.rs`)
 
-### Phase 2: IPC サーバー実装
-1. Unix Domain Socket サーバー (`socket_server.rs`)
-2. JSON-RPC プロトコルでイベント受信
-3. Frontend への Tauri events 発行
+### Phase 2: IPC server
+1. Unix Domain Socket server (`socket_server.rs`)
+2. Receive events via JSON-RPC
+3. Emit Tauri events to the frontend
 
-### Phase 3: 通知機能実装
-1. `tauri-plugin-notification` で macOS 通知
-2. タスク完了時・入力待ち時に通知
+### Phase 3: Notifications
+1. macOS notifications via `tauri-plugin-notification`
+2. Notify on task completion and when input is required
 
-### Phase 4: Frontend UI 実装
-1. React でタスク一覧 UI
-2. Claude Code / Codex の視覚的区別（アイコン・色）
-3. リアルタイム更新
+### Phase 4: Frontend UI
+1. Task list UI in React
+2. Visual distinction for Claude Code / Codex (icons, colors)
+3. Real-time updates
 
-### Phase 5: CLI ツール連携
-1. Claude Code Hooks スクリプト作成
-2. Codex notify スクリプト作成
-3. ユーザー向けセットアップガイド
+### Phase 5: CLI tool integration
+1. Claude Code hooks scripts
+2. Codex notify scripts
+3. User setup guide
 
-### Phase 6: 品質向上
-1. エラーハンドリング
-2. ロギング
-3. macOS 署名・公証
+### Phase 6: Quality improvements
+1. Error handling
+2. Logging
+3. macOS signing and notarization
 
-## CLI ツール連携設定
+## CLI tool integration config
 
 ### Claude Code (~/.claude/settings.json)
 ```json
@@ -152,58 +152,58 @@ pub struct Task {
 notify = ["bash", "/path/to/codex-notify.sh"]
 ```
 
-## 通知スクリプト詳細
+## Notification scripts
 
-両スクリプトは **Bash + jq + nc** で統一。依存: `jq`, `nc` (netcat)
+Both scripts are standardized on **Bash + jq + nc**. Dependencies: `jq`, `nc` (netcat)
 
 ### claude-code-hook.sh
-- **入力**: stdin から JSON
-- **処理**: `jq` でパースし、イベント種別に応じたメッセージを構築
-- **出力**: `nc -U /tmp/ai-agent-status.sock` でソケット送信
+- **Input**: JSON from stdin
+- **Processing**: parse with `jq`, build a message per event type
+- **Output**: send to socket via `nc -U /tmp/ai-agent-status.sock`
 
 ```bash
 #!/bin/bash
 SOCKET="/tmp/ai-agent-status.sock"
 INPUT=$(cat)
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // empty')
-# ... イベント種別に応じて JSON-RPC メッセージを構築
+# ... build JSON-RPC message based on event type
 echo "$MESSAGE" | nc -U "$SOCKET"
 ```
 
 ### codex-notify.sh
-- **入力**: コマンドライン引数 `$1` に JSON
-- **処理**: `jq` でパースし、イベント種別に応じたメッセージを構築
-- **出力**: `nc -U /tmp/ai-agent-status.sock` でソケット送信
+- **Input**: JSON in `$1`
+- **Processing**: parse with `jq`, build a message per event type
+- **Output**: send to socket via `nc -U /tmp/ai-agent-status.sock`
 
 ```bash
 #!/bin/bash
 SOCKET="/tmp/ai-agent-status.sock"
 INPUT="$1"
 EVENT_TYPE=$(echo "$INPUT" | jq -r '.type // empty')
-# ... イベント種別に応じて JSON-RPC メッセージを構築
+# ... build JSON-RPC message based on event type
 echo "$MESSAGE" | nc -U "$SOCKET"
 ```
 
-### 依存パッケージのインストール (macOS)
+### Install dependencies (macOS)
 ```bash
-brew install jq  # nc は macOS 標準搭載
+brew install jq  # nc is bundled on macOS
 ```
 
-## 主要クレート
+## Primary crates
 
-| クレート | 用途 |
-|----------|------|
-| tauri (2.x) | フレームワーク |
-| tokio | 非同期ランタイム |
-| serde/serde_json | シリアライズ |
-| tauri-plugin-notification | OS 通知 |
-| dashmap | スレッドセーフ Map |
-| uuid | セッション ID |
+| Crate | Purpose |
+|-------|---------|
+| tauri (2.x) | framework |
+| tokio | async runtime |
+| serde/serde_json | serialization |
+| tauri-plugin-notification | OS notifications |
+| dashmap | thread-safe map |
+| uuid | session IDs |
 
-## 検証方法
+## Validation steps
 
-1. **基本動作**: アプリ起動 → メニューバーにアイコン表示 → クリックでウィンドウ表示
-2. **Claude Code 連携**: Hooks 設定 → `claude` コマンド実行 → タスク一覧に表示
-3. **Codex 連携**: notify 設定 → `codex` コマンド実行 → タスク一覧に表示
-4. **通知**: タスク完了時・入力待ち時に macOS 通知が表示
-5. **識別**: Claude Code / Codex のタスクが視覚的に区別できる
+1. **Basic behavior**: launch app → menu bar icon appears → click shows window
+2. **Claude Code integration**: configure hooks → run `claude` → tasks appear
+3. **Codex integration**: configure notify → run `codex` → tasks appear
+4. **Notifications**: macOS notification on completion and waiting for input
+5. **Identification**: Claude Code / Codex tasks are visually distinct

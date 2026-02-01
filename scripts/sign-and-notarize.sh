@@ -1,21 +1,21 @@
 #!/bin/bash
-# macOS アプリの署名と公証を行うスクリプト
+# Script to sign and notarize the macOS app
 # Usage: ./scripts/sign-and-notarize.sh
 
 set -euo pipefail
 
-# 設定
-APP_NAME="AI Agent Status"
-BUNDLE_ID="com.ai-agent-status.app"
+# Config
+APP_NAME="AgentPulse"
+BUNDLE_ID="com.agentpulse.app"
 APP_PATH="./src-tauri/target/release/bundle/macos/${APP_NAME}.app"
 DMG_PATH="./src-tauri/target/release/bundle/dmg/${APP_NAME}.dmg"
 
-# 環境変数チェック
+# Environment checks
 : "${APPLE_ID:?APPLE_ID environment variable is required}"
 : "${APPLE_ID_PASSWORD:?APPLE_ID_PASSWORD environment variable is required}"
 : "${APPLE_TEAM_ID:?APPLE_TEAM_ID environment variable is required}"
 
-# 署名証明書の検索
+# Find signing certificate
 SIGNING_IDENTITY=$(security find-identity -v -p codesigning | grep "Developer ID Application" | head -1 | awk -F'"' '{print $2}')
 if [[ -z "$SIGNING_IDENTITY" ]]; then
     echo "Error: Developer ID Application certificate not found"
@@ -23,41 +23,42 @@ if [[ -z "$SIGNING_IDENTITY" ]]; then
 fi
 echo "Using signing identity: $SIGNING_IDENTITY"
 
-# ビルド
+# Build
 echo "Building release..."
 npm run tauri build
 
-# コード署名
+# Code signing
 echo "Signing application..."
 codesign --force --options runtime --sign "$SIGNING_IDENTITY" \
     --entitlements ./src-tauri/entitlements.plist \
     --deep "$APP_PATH"
 
-# 署名検証
+# Verify signature
 echo "Verifying signature..."
 codesign --verify --deep --strict --verbose=2 "$APP_PATH"
 spctl --assess --type execute --verbose "$APP_PATH"
 
-# DMG の署名
+# Sign DMG
 if [[ -f "$DMG_PATH" ]]; then
     echo "Signing DMG..."
     codesign --force --sign "$SIGNING_IDENTITY" "$DMG_PATH"
 fi
 
-# 公証
+# Notarize
 if [[ -f "$DMG_PATH" ]]; then
     echo "Submitting for notarization..."
     xcrun notarytool submit "$DMG_PATH" \
+        --primary-bundle-id "$BUNDLE_ID" \
         --apple-id "$APPLE_ID" \
         --password "$APPLE_ID_PASSWORD" \
         --team-id "$APPLE_TEAM_ID" \
         --wait
 
-    # Staple（公証チケットを添付）
+    # Staple notarization ticket
     echo "Stapling notarization ticket..."
     xcrun stapler staple "$DMG_PATH"
 
-    # 最終検証
+    # Final verification
     echo "Final verification..."
     spctl --assess --type open --context context:primary-signature --verbose "$DMG_PATH"
 else

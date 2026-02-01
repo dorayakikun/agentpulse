@@ -2,6 +2,7 @@ import { Task } from "../types/task";
 import { StatusBadge } from "./StatusBadge";
 import { SourceIcon } from "./SourceIcon";
 import { getProjectName, formatRelativeTime, truncate } from "../utils/format";
+import { buildTaskSummary } from "../utils/taskSummary";
 import "./TaskItem.css";
 
 interface TaskItemProps {
@@ -12,6 +13,7 @@ interface TaskItemProps {
 export function TaskItem({ task, onDismiss }: TaskItemProps) {
   const projectName = getProjectName(task.project_path);
   const canDismiss = task.status === "completed" || task.status === "error";
+  const summary = buildTaskSummary(task, projectName);
 
   return (
     <li className={`task-item task-item--${task.source}`}>
@@ -24,6 +26,11 @@ export function TaskItem({ task, onDismiss }: TaskItemProps) {
       </div>
 
       <div className="task-item-body">
+        {summary && (
+          <p className="task-summary" title={summary}>
+            {truncate(summary, 80)}
+          </p>
+        )}
         {task.current_tool && (
           <div className="current-tool">
             <span className="tool-label">Tool:</span>

@@ -188,6 +188,7 @@ pub struct TaskEventPayload {
     pub status: String,
     pub current_tool: Option<String>,
     pub description: Option<String>,
+    pub last_activity: Option<String>,
     pub project_path: String,
     pub started_at: i64,
     pub last_updated: i64,
