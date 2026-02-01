@@ -23,7 +23,7 @@ Claude Code / Codex などの AI エージェントの進捗状況を一覧管�
 └───────────────────────┬─────────────────────────┘
                         │
               Unix Domain Socket
-              (/tmp/ai-agent-status.sock)
+              (/tmp/agentpulse.sock)
                         │
         ┌───────────────┼───────────────┐
         ▼               ▼               ▼
@@ -53,7 +53,7 @@ npm run tauri build
 
 ## CLI ツール連携
 
-AI Agent Status Monitor は Claude Code と Codex からイベントを受信し、
+AgentPulse は Claude Code と Codex からイベントを受信し、
 タスクの進捗状況をリアルタイムで表示します。
 
 ### 前提条件
@@ -135,7 +135,7 @@ notify = ["bash", "/path/to/scripts/codex-notify.sh"]
 
 ### 動作確認
 
-1. AI Agent Status Monitor を起動
+1. AgentPulse を起動
 2. メニューバーにアイコンが表示されることを確認
 3. テストスクリプトを実行:
    ```bash
@@ -166,7 +166,7 @@ Playwright 実行時は `VITE_E2E=1` が自動で付与され、`@tauri-apps/api
 
 | 問題 | 原因 | 解決方法 |
 |------|------|----------|
-| タスクが表示されない | ソケット未接続 | アプリを起動し、`ls -la /tmp/ai-agent-status.sock` で確認 |
+| タスクが表示されない | ソケット未接続 | アプリを起動し、`ls -la /tmp/agentpulse.sock` で確認 |
 | jq: command not found | jq 未インストール | `brew install jq` (macOS) |
 | Permission denied | スクリプト実行権限なし | `chmod +x scripts/*.sh` |
 | 設定が反映されない | Claude Code 再起動が必要 | Claude Code を再起動 |
@@ -196,13 +196,13 @@ unset CODEX_NOTIFY_DEBUG
 
 ```bash
 # ソケット接続確認
-echo '{"jsonrpc":"2.0","method":"ping","id":1}' | nc -U /tmp/ai-agent-status.sock
+echo '{"jsonrpc":"2.0","method":"ping","id":1}' | nc -U /tmp/agentpulse.sock
 
 # 手動でイベント送信
 echo '{"session_id":"debug-test","cwd":"/tmp"}' | ./scripts/claude-code-hook.sh session_start
 
 # ログファイル確認 (macOS)
-tail -f ~/Library/Logs/AI\ Agent\ Status/ai-agent-status*.log
+tail -f ~/Library/Logs/AgentPulse/agentpulse*.log
 ```
 
 ### タスク状態のトレイアニメーション
@@ -211,8 +211,8 @@ tail -f ~/Library/Logs/AI\ Agent\ Status/ai-agent-status*.log
 `running` と `waiting` の 2 セットを用意してあり、**後から画像を差し替えて自由に変更できます**。
 
 macOS の配置先:
-- `~/Library/Application Support/com.ai-agent-status.app/tray/running/frame_0.png` ... `frame_7.png`
-- `~/Library/Application Support/com.ai-agent-status.app/tray/waiting/frame_0.png` ... `frame_7.png`
+- `~/Library/Application Support/com.agentpulse.app/tray/running/frame_0.png` ... `frame_7.png`
+- `~/Library/Application Support/com.agentpulse.app/tray/waiting/frame_0.png` ... `frame_7.png`
 
 動作:
 - `waiting` が 1 件以上: `waiting` セットを表示

@@ -29,7 +29,7 @@ const clearInvokeConfig = async (page) => {
 
 test("renders empty state on startup", async ({ page }) => {
   await page.goto("/");
-  await expect(page.locator("h1.header-title")).toHaveText("AI Agent Status");
+  await expect(page.locator("h1.header-title")).toHaveText("AgentPulse");
   await expect(page.locator(".empty-title")).toBeVisible();
 });
 

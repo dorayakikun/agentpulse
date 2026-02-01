@@ -5,8 +5,8 @@
 set -euo pipefail
 
 # 設定
-APP_NAME="AI Agent Status"
-BUNDLE_ID="com.ai-agent-status.app"
+APP_NAME="AgentPulse"
+BUNDLE_ID="com.agentpulse.app"
 APP_PATH="./src-tauri/target/release/bundle/macos/${APP_NAME}.app"
 DMG_PATH="./src-tauri/target/release/bundle/dmg/${APP_NAME}.dmg"
 

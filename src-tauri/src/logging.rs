@@ -29,7 +29,7 @@ impl Default for LogConfig {
 pub fn init_logging(config: LogConfig) -> Option<WorkerGuard> {
     let env_filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
         EnvFilter::new(format!(
-            "ai_agent_status={},ai_agent_status_lib={},tauri=warn",
+            "agentpulse={},agentpulse_lib={},tauri=warn",
             config.level.as_str().to_lowercase(),
             config.level.as_str().to_lowercase()
         ))
@@ -56,7 +56,7 @@ pub fn init_logging(config: LogConfig) -> Option<WorkerGuard> {
             return None;
         }
 
-        let file_appender = tracing_appender::rolling::daily(&log_dir, "ai-agent-status.log");
+        let file_appender = tracing_appender::rolling::daily(&log_dir, "agentpulse.log");
         let (non_blocking, guard) = tracing_appender::non_blocking(file_appender);
 
         if config.json_format {
@@ -113,16 +113,16 @@ pub fn init_logging(config: LogConfig) -> Option<WorkerGuard> {
 pub fn get_log_dir() -> Option<PathBuf> {
     #[cfg(target_os = "macos")]
     {
-        dirs::home_dir().map(|h| h.join("Library/Logs/AI Agent Status"))
+        dirs::home_dir().map(|h| h.join("Library/Logs/AgentPulse"))
     }
 
     #[cfg(target_os = "linux")]
     {
-        dirs::data_local_dir().map(|d| d.join("ai-agent-status/logs"))
+        dirs::data_local_dir().map(|d| d.join("agentpulse/logs"))
     }
 
     #[cfg(target_os = "windows")]
     {
-        dirs::data_local_dir().map(|d| d.join("AI Agent Status\\logs"))
+        dirs::data_local_dir().map(|d| d.join("AgentPulse\\logs"))
     }
 }

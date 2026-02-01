@@ -1,7 +1,7 @@
 #!/bin/bash
-# Test script for AI Agent Status socket server
+# Test script for AgentPulse socket server
 
-SOCKET="/tmp/ai-agent-status.sock"
+SOCKET="/tmp/agentpulse.sock"
 SESSION_ID="test-session-$(date +%s)"
 
 # Colors for output
@@ -25,12 +25,12 @@ send_request() {
 # Check if socket exists
 if [ ! -S "$SOCKET" ]; then
     echo -e "${RED}Error: Socket file not found at $SOCKET${NC}"
-    echo "Make sure the AI Agent Status app is running."
+    echo "Make sure the AgentPulse app is running."
     exit 1
 fi
 
 echo "================================"
-echo "AI Agent Status Socket Test"
+echo "AgentPulse Socket Test"
 echo "Session ID: $SESSION_ID"
 echo "================================"
 echo ""

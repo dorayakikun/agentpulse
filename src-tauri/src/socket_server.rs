@@ -73,7 +73,7 @@ pub struct SocketServerConfig {
 impl Default for SocketServerConfig {
     fn default() -> Self {
         Self {
-            socket_path: PathBuf::from("/tmp/ai-agent-status.sock"),
+            socket_path: PathBuf::from("/tmp/agentpulse.sock"),
         }
     }
 }

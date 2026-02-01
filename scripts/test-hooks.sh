@@ -5,19 +5,19 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-SOCKET="/tmp/ai-agent-status.sock"
+SOCKET="/tmp/agentpulse.sock"
 
 # ソケット存在チェック
 check_socket() {
     if [[ ! -S "$SOCKET" ]]; then
         echo "Error: Socket not found at $SOCKET"
-        echo "Please start AI Agent Status Monitor first."
+        echo "Please start AgentPulse first."
         exit 1
     fi
     echo "Socket found at $SOCKET"
 }
 
-echo "=== AI Agent Status Monitor - Hook Test Script ==="
+echo "=== AgentPulse - Hook Test Script ==="
 echo ""
 
 check_socket
@@ -103,4 +103,4 @@ echo '{"session_id":"test-unknown","type":"unknown_event"}' | \
 echo ""
 echo "=== All tests completed ==="
 echo ""
-echo "Check the AI Agent Status Monitor to verify the test tasks are displayed."
+echo "Check AgentPulse to verify the test tasks are displayed."

@@ -39,7 +39,7 @@ fn main() {
 
     info!(
         version = env!("CARGO_PKG_VERSION"),
-        "Starting AI Agent Status Monitor"
+        "Starting AgentPulse"
     );
 
     let app_state = Arc::new(AppState::new());
@@ -85,7 +85,7 @@ fn main() {
         .run(|_app_handle, event| {
             if let RunEvent::Exit = event {
                 // Cleanup socket file on exit
-                let _ = std::fs::remove_file("/tmp/ai-agent-status.sock");
+                let _ = std::fs::remove_file("/tmp/agentpulse.sock");
                 info!("Socket file cleaned up");
             }
         });

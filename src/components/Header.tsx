@@ -7,7 +7,7 @@ interface HeaderProps {
 export function Header({ taskCount }: HeaderProps) {
   return (
     <header className="header">
-      <h1 className="header-title">AI Agent Status</h1>
+      <h1 className="header-title">AgentPulse</h1>
       <span className="header-count">
         {taskCount} {taskCount === 1 ? "task" : "tasks"}
       </span>

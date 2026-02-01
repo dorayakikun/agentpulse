@@ -18,7 +18,7 @@ log_debug() {
 log_debug "[codex-notify] Script called at $(date)"
 log_debug "[codex-notify] Arg1: ${1:-empty}"
 
-SOCKET="/tmp/ai-agent-status.sock"
+SOCKET="/tmp/agentpulse.sock"
 INPUT="${1:-}"
 
 # 引数が空で stdin がある場合は stdin から読み込む

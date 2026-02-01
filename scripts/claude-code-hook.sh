@@ -6,7 +6,7 @@
 
 set -euo pipefail
 
-SOCKET="/tmp/ai-agent-status.sock"
+SOCKET="/tmp/agentpulse.sock"
 EVENT_TYPE="${1:-}"
 
 # ソケットが存在しない場合は終了（アプリ未起動）

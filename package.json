@@ -1,7 +1,7 @@
 {
-  "name": "ai-agent-status",
+  "name": "agentpulse",
   "version": "0.1.0",
-  "description": "AI Agent Status Monitor - macOS menu bar app",
+  "description": "AgentPulse - macOS menu bar app",
   "type": "module",
   "scripts": {
     "dev": "vite",

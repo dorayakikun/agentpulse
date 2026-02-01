@@ -112,7 +112,7 @@ fn toggle_window(app: &AppHandle) {
 /// Create main window
 fn create_main_window(app: &AppHandle) {
     let window = WebviewWindowBuilder::new(app, "main", WebviewUrl::App("index.html".into()))
-        .title("AI Agent Status")
+        .title("AgentPulse")
         .inner_size(400.0, 500.0)
         .decorations(false)
         .skip_taskbar(true)
