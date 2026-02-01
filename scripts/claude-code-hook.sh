@@ -26,12 +26,12 @@ send_message() {
     local method="$1"
     local params="$2"
     local message
-    message=$(jq -n \
+    message=$(jq -nc \
         --arg method "$method" \
         --argjson params "$params" \
         '{jsonrpc: "2.0", method: $method, params: $params, id: null}')
 
-    echo "$message" | nc -U "$SOCKET" -w 1 2>/dev/null || true
+    printf '%s\n' "$message" | nc -U "$SOCKET" -w 1 2>/dev/null || true
 }
 
 # フィールド抽出ヘルパー
@@ -47,7 +47,7 @@ case "$EVENT_TYPE" in
         CWD=$(get_field '.cwd')
 
         if [[ -n "$SESSION_ID" && -n "$CWD" ]]; then
-            PARAMS=$(jq -n \
+            PARAMS=$(jq -nc \
                 --arg session_id "$SESSION_ID" \
                 --arg project_path "$CWD" \
                 '{
@@ -72,7 +72,7 @@ case "$EVENT_TYPE" in
         fi
 
         if [[ -n "$SESSION_ID" && -n "$TOOL_NAME" ]]; then
-            PARAMS=$(jq -n \
+            PARAMS=$(jq -nc \
                 --arg session_id "$SESSION_ID" \
                 --arg status "running" \
                 --arg current_tool "$TOOL_NAME" \
@@ -102,7 +102,7 @@ case "$EVENT_TYPE" in
                 DESCRIPTION=""
             fi
 
-            PARAMS=$(jq -n \
+            PARAMS=$(jq -nc \
                 --arg session_id "$SESSION_ID" \
                 --arg status "$STATUS" \
                 --arg description "$DESCRIPTION" \
@@ -125,7 +125,7 @@ case "$EVENT_TYPE" in
         if [[ -n "$SESSION_ID" ]]; then
             case "$NOTIFICATION_TYPE" in
                 permission_prompt|idle_prompt)
-                    PARAMS=$(jq -n \
+                    PARAMS=$(jq -nc \
                         --arg session_id "$SESSION_ID" \
                         --arg status "waiting_for_input" \
                         --arg description "$MESSAGE" \
@@ -155,7 +155,7 @@ case "$EVENT_TYPE" in
                     ;;
             esac
 
-            PARAMS=$(jq -n \
+            PARAMS=$(jq -nc \
                 --arg session_id "$SESSION_ID" \
                 --arg status "$STATUS" \
                 '{

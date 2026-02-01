@@ -5,33 +5,56 @@
 
 set -euo pipefail
 
+DEBUG_LOG="/tmp/codex-notify-debug.log"
+DEBUG="${CODEX_NOTIFY_DEBUG:-0}"
+
+log_debug() {
+    if [[ "$DEBUG" == "1" ]]; then
+        echo "$1" >> "$DEBUG_LOG"
+    fi
+}
+
+# 最初にログ出力（デバッグ用）- 早期終了前に記録
+log_debug "[codex-notify] Script called at $(date)"
+log_debug "[codex-notify] Arg1: ${1:-empty}"
+
 SOCKET="/tmp/ai-agent-status.sock"
 INPUT="${1:-}"
 
+# 引数が空で stdin がある場合は stdin から読み込む
+if [[ -z "$INPUT" && ! -t 0 ]]; then
+    INPUT="$(cat -)"
+fi
+
 # ソケットが存在しない場合は終了（アプリ未起動）
 if [[ ! -S "$SOCKET" ]]; then
+    log_debug "[codex-notify] Socket not found, exiting"
     exit 0
 fi
 
 # 入力がない場合は終了
 if [[ -z "$INPUT" ]]; then
+    log_debug "[codex-notify] No input, exiting"
     exit 0
 fi
 
-# デバッグ用（開発時のみ有効化）
-# echo "[DEBUG] Input: $INPUT" >&2
+# 追加のデバッグ情報
+log_debug "[codex-notify] INPUT: $INPUT"
+log_debug "[codex-notify] SOCKET exists: yes"
+log_debug "[codex-notify] PID: $$"
 
 # JSON-RPC メッセージを送信する関数
 send_message() {
     local method="$1"
     local params="$2"
     local message
-    message=$(jq -n \
+    message=$(jq -nc \
         --arg method "$method" \
         --argjson params "$params" \
         '{jsonrpc: "2.0", method: $method, params: $params, id: null}')
 
-    echo "$message" | nc -U "$SOCKET" -w 1 2>/dev/null || true
+    log_debug "[codex-notify] SEND method=$method params=$params"
+    echo "$message" | nc -U "$SOCKET" -w 1 >/dev/null 2>&1 || true
 }
 
 # フィールド抽出ヘルパー
@@ -40,9 +63,13 @@ get_field() {
 }
 
 # Codex イベントタイプを取得
-EVENT_TYPE=$(get_field '.type')
-THREAD_ID=$(get_field '.thread_id')
-CWD=$(get_field '.cwd')
+EVENT_TYPE=$(get_field '.type // .event')
+THREAD_ID=$(get_field '."thread-id" // .thread_id // .session_id')
+CWD=$(get_field '.cwd // ."project-path" // .project_path')
+
+log_debug "[codex-notify] EVENT_TYPE: $EVENT_TYPE"
+log_debug "[codex-notify] THREAD_ID(raw): $THREAD_ID"
+log_debug "[codex-notify] CWD: $CWD"
 
 # ハッシュ生成関数（macOS/Linux両対応）
 generate_hash() {
@@ -74,7 +101,7 @@ fi
 case "$EVENT_TYPE" in
     agent-turn-start)
         # エージェントターン開始
-        PARAMS=$(jq -n \
+        PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
             --arg project_path "$CWD" \
             '{
@@ -89,7 +116,7 @@ case "$EVENT_TYPE" in
         # コマンド実行開始 / パッチ適用開始
         COMMAND=$(get_field '.command')
 
-        PARAMS=$(jq -n \
+        PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
             --arg status "running" \
             --arg current_tool "$EVENT_TYPE" \
@@ -113,7 +140,7 @@ case "$EVENT_TYPE" in
             STATUS="running"
         fi
 
-        PARAMS=$(jq -n \
+        PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
             --arg status "$STATUS" \
             '{
@@ -128,7 +155,7 @@ case "$EVENT_TYPE" in
         # 承認要求
         MESSAGE=$(get_field '.message')
 
-        PARAMS=$(jq -n \
+        PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
             --arg status "waiting_for_input" \
             --arg description "$MESSAGE" \
@@ -142,9 +169,20 @@ case "$EVENT_TYPE" in
 
     agent-turn-complete)
         # エージェントターン完了
-        LAST_MESSAGE=$(get_field '.last_assistant_message')
+        LAST_MESSAGE=$(get_field '."last-assistant-message" // .last_assistant_message')
 
-        PARAMS=$(jq -n \
+        # Codex notify は完了イベントのみのため、開始が未送信の可能性がある
+        START_PARAMS=$(jq -nc \
+            --arg session_id "$THREAD_ID" \
+            --arg project_path "$CWD" \
+            '{
+                session_id: $session_id,
+                source: "codex",
+                project_path: $project_path
+            }')
+        send_message "task.start" "$START_PARAMS"
+
+        PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
             --arg status "completed" \
             --arg description "$LAST_MESSAGE" \
@@ -160,7 +198,7 @@ case "$EVENT_TYPE" in
         # エラー発生
         ERROR_MESSAGE=$(get_field '.error')
 
-        PARAMS=$(jq -n \
+        PARAMS=$(jq -nc \
             --arg session_id "$THREAD_ID" \
             --arg status "error" \
             --arg description "$ERROR_MESSAGE" \
@@ -173,7 +211,9 @@ case "$EVENT_TYPE" in
         ;;
 
     *)
-        # 不明なイベントは無視
+        # 不明なイベントをログに記録（デバッグ用）
+        log_debug "[codex-notify] Unknown event type: $EVENT_TYPE"
+        log_debug "[codex-notify] Full input: $INPUT"
         ;;
 esac
 

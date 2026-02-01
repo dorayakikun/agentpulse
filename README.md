@@ -154,6 +154,27 @@ notify = ["bash", "/path/to/scripts/codex-notify.sh"]
 | Permission denied | スクリプト実行権限なし | `chmod +x scripts/*.sh` |
 | 設定が反映されない | Claude Code 再起動が必要 | Claude Code を再起動 |
 
+### Codex notify のデバッグログ
+
+`scripts/codex-notify.sh` はデバッグログをオン/オフできます。
+
+有効化（1回のセッションだけ）:
+```bash
+CODEX_NOTIFY_DEBUG=1 codex "hello"
+```
+
+有効化（常時）:
+```toml
+notify = ["bash", "-lc", "CODEX_NOTIFY_DEBUG=1 /path/to/scripts/codex-notify.sh"]
+```
+
+無効化:
+```bash
+unset CODEX_NOTIFY_DEBUG
+```
+
+ログ出力先: `/tmp/codex-notify-debug.log`
+
 ### デバッグ方法
 
 ```bash
